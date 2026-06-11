@@ -43,5 +43,11 @@
     "status",
     "target"
   ],
-  "operational_exception": "A 1-GPU production pod was used for data access because the MLXP PVC path is pod-accessible; the H200 inference gate remained blocked until sanity passed."
+  "operational_exception": "A 1-GPU production pod was used for data access because the MLXP PVC path is pod-accessible; the H200 inference gate remained blocked until sanity passed.",
+  "source_choice_contract": {
+    "translation_row_source": "metadata.csv",
+    "rationale": "metadata.csv is the flattened MMAD QA table and matched expected_rows=39672 in the full sanity check.",
+    "audit_source": "mmad.json",
+    "audit_note": "mmad.json is image-keyed and recorded as 8366 images / 39670 nested conversation turns; it is sanity evidence, not the operational translation-row source for this smoke."
+  }
 }

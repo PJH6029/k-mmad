@@ -1,0 +1,186 @@
+{
+  "run_id": "kmmad-smoke-20260611-e3509f6",
+  "created_at": "2026-06-11T16:15:00+09:00",
+  "status": "complete",
+  "git_sha": "e3509f6",
+  "cluster_git_sha": "e3509f6",
+  "commands": [
+    "uv run python scripts/kmmad_download.py --method archive_urls --execute --target /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad --manifest-out /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/download-20260611T1522-kmmad-smoke-8b05575.json",
+    "uv run python scripts/kmmad_sanity_check.py --dataset /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad --report-out /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/sanity-20260611T065350Z-kmmad-smoke-4cf8734.json",
+    "python scripts/kmmad_minimal_openai_server.py --model Bllossom/llama-3.2-Korean-Bllossom-3B --host 127.0.0.1 --port 8000",
+    "uv run python scripts/kmmad_translate_smoke.py --dataset /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad --output-dir /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/20260611T1611-e3509f6-bllossom-3b-sample3 --sample-size 3",
+    "uv run python scripts/kmmad_translate_smoke.py --validate-only translation_smoke.jsonl --untranslated-report untranslated_fields.json"
+  ],
+  "dataset": {
+    "root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data",
+    "source": {
+      "hf_dataset": "jiang-cc/MMAD",
+      "hf_url": "https://huggingface.co/datasets/jiang-cc/MMAD",
+      "github_url": "https://github.com/jam-cc/MMAD",
+      "arxiv_url": "https://arxiv.org/abs/2410.09453",
+      "translation_row_source": "metadata.csv",
+      "audit_source": "mmad.json",
+      "source_choice_contract": {
+        "translation_row_source": "metadata.csv",
+        "rationale": "metadata.csv is the flattened MMAD QA table and matched expected_rows=39672 in the full sanity check.",
+        "audit_source": "mmad.json",
+        "audit_note": "mmad.json is image-keyed and recorded as 8366 images / 39670 nested conversation turns; it is sanity evidence, not the operational translation-row source for this smoke."
+      }
+    },
+    "download_manifest": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/download-20260611T1522-kmmad-smoke-8b05575.json",
+    "sanity_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/sanity-20260611T065350Z-kmmad-smoke-4cf8734.json"
+  },
+  "reservation": {
+    "project": "production",
+    "member": "<redacted>",
+    "purpose_prefix": "SKT Dokpamo - MMAD Translation",
+    "payload": {
+      "node_id": "1",
+      "gpu_start": 2,
+      "gpu_count": 1,
+      "gpu_indices": [],
+      "start_at": "2026-06-11T15:00:00+09:00",
+      "end_at": "2026-06-11T19:00:00+09:00",
+      "purpose": "SKT Dokpamo - MMAD Translation - G002 full MMAD data acquisition/sanity (GPU pod used only because MLXP PVC is pod-accessible; H200 inference gate remains blocked)",
+      "managed_image_key": "codex",
+      "registry_profile_key": "",
+      "image_path": "",
+      "command": [],
+      "args": [],
+      "actor_name": ""
+    },
+    "id": "rsv-jeonghunpark-20260611-e40f53",
+    "cancelled_at": "2026-06-11T16:12:20+09:00",
+    "active_reason": null,
+    "final_status": "cancelled",
+    "final_pod_visible": false
+  },
+  "image_runtime": {
+    "image_path": "ghcr.io/pjh6029/snupi-personal-codex:20260414",
+    "image_digest": null,
+    "managed_image_key": "codex",
+    "command": "python scripts/kmmad_minimal_openai_server.py --model Bllossom/llama-3.2-Korean-Bllossom-3B --host 127.0.0.1 --port 8000",
+    "health_check": "GET http://127.0.0.1:8000/health returned status ok"
+  },
+  "model": {
+    "identifier": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+    "revision": null,
+    "endpoint": "http://127.0.0.1:8000/v1",
+    "trust_remote_code": false
+  },
+  "artifacts": {
+    "translation_output": "run_records/kmmad-smoke-20260611-e3509f6/translation/translation_smoke.jsonl",
+    "untranslated_field_report": "run_records/kmmad-smoke-20260611-e3509f6/translation/untranslated_fields.json",
+    "validation_report": "run_records/kmmad-smoke-20260611-e3509f6/translation/translation_validation.json",
+    "inspection_examples": "run_records/kmmad-smoke-20260611-e3509f6/translation/inspection_examples.json",
+    "logs": [
+      "run_records/kmmad-smoke-20260611-e3509f6/inference/bllossom-server.log"
+    ],
+    "translation_summary": {
+      "git_sha": "e3509f6",
+      "model": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+      "server_url": "http://127.0.0.1:8000/v1",
+      "output_dir": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/20260611T1611-e3509f6-bllossom-3b-sample3",
+      "validation": {
+        "status": "passed",
+        "rows": 3,
+        "errors": []
+      },
+      "untranslated": {
+        "created_at": "20260611T071030Z",
+        "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/metadata.csv",
+        "sample_size": 3,
+        "translated_scope": [
+          "question",
+          "options",
+          "caption"
+        ],
+        "untranslated_text_fields": {},
+        "missing_configured_translation_fields": {
+          "caption": 3
+        }
+      },
+      "has_korean": true,
+      "has_cjk_chinese": false,
+      "has_assistant_artifact": false,
+      "inspection_examples": [
+        {
+          "source": {
+            "query_image": "DS-MVTec/pill/image/color/005.png",
+            "question": "There is a defect in the object. What is the appearance of the defect?",
+            "options": "A: Discrete red speckles.\nB: Red smudging along the edge.\nC: A chip on the edge.\nD: A crack across the pill.",
+            "answer": "B",
+            "template_image": "MVTec-AD/pill/train/good/019.png",
+            "mask": "DS-MVTec/pill/image/rgb_mask/color/005_rgb_mask.png"
+          },
+          "translated": {
+            "question": "결함이 있는 물체의 외관은 무엇인가요?",
+            "options": "A: 결함.\nB: 반점이 가득한 가장자리.\nC: 가장자리에 결함.\nD: 알약에 균열."
+          },
+          "translation_scope": [
+            "question",
+            "options",
+            "caption"
+          ],
+          "missing_translation_scope": [
+            "caption"
+          ]
+        },
+        {
+          "source": {
+            "query_image": "DS-MVTec/pill/image/crack/002.png",
+            "question": "There is a defect in the object. What is the type of the defect?",
+            "options": "A: Scratch.\nB: Deformation.\nC: Crack.\nD: Discoloration.",
+            "answer": "C",
+            "template_image": "MVTec-AD/pill/train/good/266.png",
+            "mask": "DS-MVTec/pill/image/rgb_mask/crack/002_rgb_mask.png"
+          },
+          "translated": {
+            "question": "결함의 종류는 무엇인가요?",
+            "options": "A: 긁힘.\nB: 변형.\nC: 균열.\nD: 변색."
+          },
+          "translation_scope": [
+            "question",
+            "options",
+            "caption"
+          ],
+          "missing_translation_scope": [
+            "caption"
+          ]
+        },
+        {
+          "source": {
+            "query_image": "DS-MVTec/pill/image/good/011.png",
+            "question": "What kind of product is in the image?",
+            "options": "A: An oval-shaped pill.\nB: A whiteboard eraser.\nC: A metal gear.\nD: A piece of modern art.",
+            "answer": "C",
+            "template_image": "MVTec-AD/pill/train/good/115.png",
+            "mask": ""
+          },
+          "translated": {
+            "question": "이 이미지에 있는 제품의 종류는 무엇인가요?",
+            "options": "A: 결함 모양의 알약.\nB: 화이트보드 지우개.\nC: 금속 기계 부품.\nD: 현대 미술 작품."
+          },
+          "translation_scope": [
+            "question",
+            "options",
+            "caption"
+          ],
+          "missing_translation_scope": [
+            "caption"
+          ]
+        }
+      ]
+    }
+  },
+  "failures_retries": [
+    "Qwen/Qwen2.5-7B-Instruct produced CJK/Chinese in an inspected smoke row.",
+    "LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct loaded but generation failed with the ephemeral Transformers runtime.",
+    "microsoft/Phi-4-mini-instruct failed to load because remote code expected a different Transformers API."
+  ],
+  "notes": [
+    "Smoke-only run; no full translation, benchmark evaluation, model comparison, or polished quality gate.",
+    "Caption fields were absent in the sampled metadata.csv rows and reported as missing_configured_translation_fields.caption=3.",
+    "A 1-GPU production pod was used for data access because the MLXP PVC path is pod-accessible; H200 inference gate remained blocked until full-data sanity passed."
+  ]
+}

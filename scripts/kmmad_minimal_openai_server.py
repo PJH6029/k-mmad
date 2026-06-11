@@ -10,6 +10,7 @@ It implements only the endpoints needed by `kmmad_translate_smoke.py`.
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import time
 import traceback
@@ -18,21 +19,35 @@ from typing import Any
 
 
 class ChatModel:
-    def __init__(self, model_name: str, max_model_length: int | None = None) -> None:
-        import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+    def __init__(
+        self,
+        model_name: str,
+        max_model_length: int | None = None,
+        *,
+        trust_remote_code: bool = False,
+        revision: str | None = None,
+    ) -> None:
+        torch = importlib.import_module("torch")
+        transformers = importlib.import_module("transformers")
+        auto_tokenizer = getattr(transformers, "AutoTokenizer")
+        auto_model_for_causal_lm = getattr(transformers, "AutoModelForCausalLM")
 
         self.model_name = model_name
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        self.revision = revision
+        self.trust_remote_code = trust_remote_code
+        load_kwargs: dict[str, Any] = {"trust_remote_code": trust_remote_code}
+        if revision:
+            load_kwargs["revision"] = revision
+        self.tokenizer = auto_tokenizer.from_pretrained(model_name, **load_kwargs)
         dtype = torch.bfloat16 if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else "auto"
         kwargs: dict[str, Any] = {
             "torch_dtype": dtype,
-            "trust_remote_code": True,
             "low_cpu_mem_usage": True,
+            **load_kwargs,
         }
         if max_model_length:
             kwargs["max_position_embeddings"] = max_model_length
-        self.model = AutoModelForCausalLM.from_pretrained(model_name, **kwargs)
+        self.model = auto_model_for_causal_lm.from_pretrained(model_name, **kwargs)
         if torch.cuda.is_available():
             self.model.to("cuda")
         self.model.eval()
@@ -44,7 +59,7 @@ class ChatModel:
         self.stop_token_ids = [token_id for token_id in stop_ids if token_id is not None]
 
     def chat(self, messages: list[dict[str, str]], max_tokens: int, temperature: float) -> str:
-        import torch
+        torch = importlib.import_module("torch")
 
         prompt = self.tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = self.tokenizer(prompt, return_tensors="pt")
@@ -68,8 +83,8 @@ def make_handler(chat_model: ChatModel) -> type[BaseHTTPRequestHandler]:
     class Handler(BaseHTTPRequestHandler):
         server_version = "KMMADMinimalOpenAI/0.1"
 
-        def log_message(self, fmt: str, *args: Any) -> None:
-            print(f"{self.log_date_time_string()} {self.address_string()} {fmt % args}", flush=True)
+        def log_message(self, format: str, *args: Any) -> None:
+            print(f"{self.log_date_time_string()} {self.address_string()} {format % args}", flush=True)
 
         def write_json(self, status: int, payload: dict[str, Any]) -> None:
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -84,7 +99,15 @@ def make_handler(chat_model: ChatModel) -> type[BaseHTTPRequestHandler]:
                 if self.path.rstrip("/") == "/v1/models":
                     self.write_json(200, {"object": "list", "data": [{"id": chat_model.model_name, "object": "model"}]})
                 else:
-                    self.write_json(200, {"status": "ok", "model": chat_model.model_name})
+                    self.write_json(
+                        200,
+                        {
+                            "status": "ok",
+                            "model": chat_model.model_name,
+                            "revision": chat_model.revision,
+                            "trust_remote_code": chat_model.trust_remote_code,
+                        },
+                    )
                 return
             self.write_json(404, {"error": {"message": f"unknown endpoint: {self.path}"}})
 
@@ -130,9 +153,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--max-model-length", type=int, default=None)
+    parser.add_argument("--revision", default=None, help="Optional pinned model revision/commit")
+    parser.add_argument(
+        "--trust-remote-code",
+        action="store_true",
+        help="Allow execution of model repository code. Keep disabled unless a pinned, reviewed model requires it.",
+    )
     args = parser.parse_args(argv)
 
-    chat_model = ChatModel(args.model, max_model_length=args.max_model_length)
+    chat_model = ChatModel(
+        args.model,
+        max_model_length=args.max_model_length,
+        trust_remote_code=args.trust_remote_code,
+        revision=args.revision,
+    )
     server = ThreadingHTTPServer((args.host, args.port), make_handler(chat_model))
     print(f"serving {args.model} on http://{args.host}:{args.port}", flush=True)
     server.serve_forever()

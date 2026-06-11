@@ -3,8 +3,11 @@
   "reservation_id": "rsv-jeonghunpark-20260611-e40f53",
   "cancel_response_status": "cancelled",
   "detail_status": "cancelled",
-  "detail_status_label": "Running",
+  "detail_status_label": "cancelled",
   "cleanup_requested_at": "",
-  "pod_phase": "Running",
-  "pod_status": "Running"
+  "pod_phase": "",
+  "pod_status": "",
+  "final_poll": 1,
+  "final_pod_visible": false,
+  "final_pod_cleanup_evidence": "run_records/kmmad-smoke-20260611-final/cleanup/pod-cleanup-confirmed.txt"
 }

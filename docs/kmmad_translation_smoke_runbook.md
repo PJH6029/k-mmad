@@ -36,3 +36,13 @@ uv run python scripts/kmmad_run_record.py validate /tmp/kmmad_run_record.json
 ## Notes on upstream MMAD download
 
 The MMAD GitHub README documents Hugging Face download options and the Hugging Face dataset currently exposes separate archives plus `metadata.csv`, `mmad.json`, and `domain_knowledge.json`. Prefer the current Hugging Face file layout over relying on a stale `ALL_DATA.zip` path.
+
+## Source-file contract
+
+- `metadata.csv` is the operational row source for translation smoke because it is the flattened QA table and matches the configured `expected_rows = 39672`.
+- `mmad.json` is still sanity-checked as the image-keyed source structure; the first smoke recorded `8366` image keys and `39670` nested conversation turns. Treat this JSON-vs-CSV delta as provenance evidence, not as a translation-row source for the current smoke.
+- The sanity report must record both the selected `record_file` and the `mmad_json` image/turn counts so future full-translation work can revisit the source contract deliberately.
+
+## Minimal server contract
+
+`scripts/kmmad_minimal_openai_server.py` is a smoke-only OpenAI-compatible shim for `/v1/chat/completions`; it is not production inference infrastructure. Keep `--trust-remote-code` disabled unless a pinned, reviewed model revision requires it, and record any such exception in the run record.

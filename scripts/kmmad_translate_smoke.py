@@ -27,6 +27,8 @@ from kmmad_common import (
 )
 
 KOREAN_RE = re.compile(r"[가-힣]")
+CJK_RE = re.compile(r"[\u4e00-\u9fff]")
+ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 
 
 def mock_translate(text: str) -> str:
@@ -126,6 +128,20 @@ def has_korean(value: Any) -> bool:
     return any(KOREAN_RE.search(text) for text in flatten_text(value))
 
 
+def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str]) -> None:
+    texts = flatten_text(value)
+    if not texts:
+        errors.append(f"row {row_idx} translated field {key!r} is empty")
+        return
+    for text_idx, text in enumerate(texts):
+        if not KOREAN_RE.search(text):
+            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} has no Korean text")
+        if CJK_RE.search(text):
+            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} contains CJK/Hanja characters")
+        if ASSISTANT_ARTIFACT_RE.search(text):
+            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} contains assistant artifact text")
+
+
 def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
     rows = read_jsonl(output)
     errors: list[str] = []
@@ -136,8 +152,13 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
         if not isinstance(translated, dict) or not translated:
             errors.append(f"row {idx} missing translated object")
             continue
-        if not any(has_korean(value) for value in translated.values()):
-            errors.append(f"row {idx} has no Korean text in translated fields")
+        missing_scope = row.get("missing_translation_scope", [])
+        if isinstance(missing_scope, list):
+            for required in ("question", "options"):
+                if required in missing_scope:
+                    errors.append(f"row {idx} missing required translation scope: {required}")
+        for key, value in translated.items():
+            validate_translated_value(idx, str(key), value, errors)
         if "source" not in row:
             errors.append(f"row {idx} missing source field")
     if report is not None and not report.exists():
