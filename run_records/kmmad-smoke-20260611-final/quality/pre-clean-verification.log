@@ -1,0 +1,35 @@
+pre-clean verification started: 2026-06-11T07:28:31Z
+PASS server help
+dry-run download plan written: /tmp/kmmad_pre_clean_download_plan.json
+PASS download dry-run plan
+sanity report written: /tmp/kmmad_pre_clean_sanity_fixture.json
+PASS fixture sanity
+translation smoke output: /tmp/kmmad_review_pre_translate_fixture/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_review_pre_translate_fixture/untranslated_fields.json
+PASS mock translation
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
+PASS mock translation validate-only
+PASS partial-English validation rejects untranslated leaf
+PASS CJK/Hanja validation rejects translated leaf
+{
+  "status": "passed",
+  "errors": []
+}
+PASS consolidated run-record validation
+Listing 'scripts'...
+Compiling 'scripts/kmmad_download.py'...
+Compiling 'scripts/kmmad_minimal_openai_server.py'...
+Compiling 'scripts/kmmad_run_record.py'...
+Compiling 'scripts/kmmad_sanity_check.py'...
+Compiling 'scripts/kmmad_translate_smoke.py'...
+PASS compileall
+All checks passed!
+PASS ruff
+0 errors, 0 warnings, 0 informations
+PASS pyright
+PASS sensitive-value grep
+pre-clean verification completed: 2026-06-11T07:28:32Z

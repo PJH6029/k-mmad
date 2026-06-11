@@ -1,0 +1,24 @@
+changed code/docs files: configs/kmmad_translation_smoke.toml docs/kmmad_translation_smoke_runbook.md scripts/kmmad_common.py scripts/kmmad_minimal_openai_server.py scripts/kmmad_sanity_check.py scripts/kmmad_translate_smoke.py 
+--- fallback-like signal scan ---
+docs/kmmad_translation_smoke_runbook.md:17:uv run python scripts/kmmad_sanity_check.py --dataset tests/fixtures/mmad_sample --expected-rows 2 --allow-partial --report-out /tmp/kmmad_sanity_fixture.json
+scripts/kmmad_run_record.py:30:    except Exception:
+scripts/kmmad_sanity_check.py:66:    except Exception as exc:  # pragma: no cover - defensive report path
+scripts/kmmad_sanity_check.py:127:    parser.add_argument("--allow-partial", action="store_true", help="Do not fail on count/archive mismatch; useful for local fixtures")
+scripts/kmmad_common.py:187:        except Exception as exc:  # pragma: no cover - defensive report path
+scripts/kmmad_translate_smoke.py:176:    parser.add_argument("--validate-only", type=Path, default=None, help="Validate an existing JSONL output")
+scripts/kmmad_minimal_openai_server.py:27:        trust_remote_code: bool = False,
+scripts/kmmad_minimal_openai_server.py:37:        self.trust_remote_code = trust_remote_code
+scripts/kmmad_minimal_openai_server.py:38:        load_kwargs: dict[str, Any] = {"trust_remote_code": trust_remote_code}
+scripts/kmmad_minimal_openai_server.py:108:                            "trust_remote_code": chat_model.trust_remote_code,
+scripts/kmmad_minimal_openai_server.py:125:            except Exception as exc:  # pragma: no cover - exercised on cluster failures
+scripts/kmmad_minimal_openai_server.py:167:        trust_remote_code=args.trust_remote_code,
+--- TODO/FIXME scan ---
+--- diffstat base..HEAD ---
+ configs/kmmad_translation_smoke.toml               |   4 +-
+ docs/kmmad_translation_smoke_runbook.md            |  10 ++
+ .../consolidated-run-record.json                   | 186 +++++++++++++++++++++
+ scripts/kmmad_common.py                            |  98 ++++++++++-
+ scripts/kmmad_minimal_openai_server.py             | 177 ++++++++++++++++++++
+ scripts/kmmad_sanity_check.py                      |  70 +++++++-
+ scripts/kmmad_translate_smoke.py                   |  57 ++++++-
+ 7 files changed, 580 insertions(+), 22 deletions(-)
