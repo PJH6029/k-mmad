@@ -34,10 +34,22 @@ from kmmad_benchmarks import load_benchmark_sample, parse_benchmark_ids, registr
 KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
+OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
 
 
 def mock_translate(text: str) -> str:
     return f"한국어 번역 초안: {text}"
+
+
+def preserve_leading_option_label(source: str, translated: str) -> str:
+    match = OPTION_LABEL_RE.match(source)
+    if not match:
+        return translated
+    label = match.group(1)
+    if re.match(rf"^\s*{re.escape(label)}[.)]\s+", translated):
+        return translated
+    prefix = source[match.start() : match.end()].strip()
+    return f"{prefix} {translated}"
 
 
 def normalized_auth_mode(inference: dict[str, Any]) -> str:
@@ -136,7 +148,8 @@ def translate_value(value: Any, config: dict[str, Any], mock: bool) -> Any:
     if isinstance(value, str):
         if not value.strip():
             return value
-        return mock_translate(value) if mock else call_openai_compatible(config, value)
+        translated = mock_translate(value) if mock else call_openai_compatible(config, value)
+        return preserve_leading_option_label(value, translated)
     if isinstance(value, list):
         return [translate_value(item, config, mock) for item in value]
     if isinstance(value, dict):

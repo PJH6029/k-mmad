@@ -6,7 +6,7 @@
     "subtask": "OCR and reasoning",
     "image_path": "images/mme-rw-001.jpg",
     "question": "What warning is shown on the roadside sign?",
-    "options": ["A. School zone", "B. No parking", "C. Speed limit 30", "D. Road closed"],
+    "options": ["A. School zone", "B. No parking", "C. Maximum speed is 30 km/h", "D. Road closed"],
     "answer": "C",
     "difficulty": "hard"
   }

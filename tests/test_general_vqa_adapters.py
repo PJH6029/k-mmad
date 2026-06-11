@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from kmmad_benchmarks import BENCHMARKS, load_benchmark_sample, normalize_benchmark_id, parse_benchmark_ids  # noqa: E402
 from kmmad_translate_smoke import (  # noqa: E402
     build_request_headers,
+    build_benchmark_translation_row,
     configured_concurrency,
     translate_rows_ordered,
 )
@@ -142,6 +143,25 @@ class GeneralVqaAdapterTest(unittest.TestCase):
             [f"한국어 지연 응답 {idx}" for idx in range(5)],
         )
         self.assertNotEqual(DelayedOpenAIHandler.seen, [f"question {idx}" for idx in range(5)])
+
+    def test_leading_option_labels_are_structurally_preserved(self) -> None:
+        row = {
+            "benchmark_id": "mme_realworld",
+            "benchmark_name": "MME-RealWorld",
+            "source_id": "label-row",
+            "text_fields": {"options": ["A. School zone", "B) No parking"]},
+            "preserve_fields": {"answer": "A"},
+            "skip_fields": {},
+            "media": [],
+            "translation_scope": ["options"],
+        }
+
+        translated, _, _ = build_benchmark_translation_row(row, {"inference": {}}, mock=True)
+
+        self.assertEqual(
+            translated["translated"]["text_fields"]["options"],
+            ["A. 한국어 번역 초안: A. School zone", "B) 한국어 번역 초안: B) No parking"],
+        )
 
 
 class OpenAiOauthAliasContractTest(unittest.TestCase):
