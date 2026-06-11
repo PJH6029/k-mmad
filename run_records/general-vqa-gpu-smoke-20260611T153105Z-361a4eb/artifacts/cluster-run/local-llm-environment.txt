@@ -1,0 +1,8 @@
+cluster_run_id=general-vqa-gpu-smoke-20260611T153105Z-361a4eb
+git_sha=361a4eb31f252b9edfff60ccb9e3606d3bbd50e4
+model=Qwen/Qwen2.5-1.5B-Instruct
+server_url=http://127.0.0.1:18000/v1
+HF_HOME=/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/cache/huggingface
+python=Python 3.11.11
+torch=2.5.1+cu124
+0, NVIDIA H200, 143771 MiB, 143156 MiB

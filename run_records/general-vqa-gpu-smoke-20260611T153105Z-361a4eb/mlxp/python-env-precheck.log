@@ -1,0 +1,24 @@
+pyproject:
+[project]
+name = "k-mmad"
+version = "0.1.0"
+description = "K-MMAD tooling for Korean translation smoke checks over MMAD"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+uv version: uv 0.11.6 (x86_64-unknown-linux-gnu)
+conda python: Python 3.11.11
+torch=2.5.1+cu124
+transformers=MISSING:ModuleNotFoundError:No module named 'transformers'
+accelerate=MISSING:ModuleNotFoundError:No module named 'accelerate'
+sentencepiece=MISSING:ModuleNotFoundError:No module named 'sentencepiece'
+bitsandbytes=MISSING:ModuleNotFoundError:No module named 'bitsandbytes'

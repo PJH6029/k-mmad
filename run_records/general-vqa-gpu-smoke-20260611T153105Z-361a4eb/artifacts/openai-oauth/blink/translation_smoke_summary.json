@@ -1,0 +1,26 @@
+{
+  "created_at": "20260611T154335Z",
+  "benchmark_id": "blink",
+  "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/blink/blink.json",
+  "sample_size": 1,
+  "mock_sanity_only": false,
+  "concurrency": 1,
+  "inference": {
+    "endpoint_provider": "openai_oauth",
+    "base_url": "http://127.0.0.1:10531/v1",
+    "model": "gpt-5.4",
+    "auth_mode": "none",
+    "api_key_env": "OPENAI_API_KEY"
+  },
+  "validation": {
+    "status": "passed",
+    "rows": 1,
+    "errors": []
+  },
+  "artifacts": {
+    "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/translation_smoke.jsonl",
+    "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/untranslated_fields.json",
+    "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/inspection_examples.json",
+    "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/translation_validation.json"
+  }
+}

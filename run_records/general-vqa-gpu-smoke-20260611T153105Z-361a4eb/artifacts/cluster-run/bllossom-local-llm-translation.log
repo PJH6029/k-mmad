@@ -1,0 +1,6 @@
+## Bllossom local GPU LLM translation smoke
+2026-06-11T15:38:44Z
+git_sha=5bd68f3fb770abed99fbf926882aad8126b43f4f
+model=Bllossom/llama-3.2-Korean-Bllossom-3B
+{"status": "ok", "model": "Bllossom/llama-3.2-Korean-Bllossom-3B", "revision": null, "trust_remote_code": false}0, NVIDIA H200, 6701 MiB, 136456 MiB, 0 %
+general VQA translation smoke output: /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom

@@ -1,0 +1,48 @@
+/opt/conda/lib/python3.11/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+`torch_dtype` is deprecated! Use `dtype` instead!
+Fetching 2 files:   0%|          | 0/2 [00:00<?, ?it/s]Fetching 2 files:  50%|█████     | 1/2 [00:10<00:10, 10.71s/it]Fetching 2 files: 100%|██████████| 2/2 [00:10<00:00,  5.36s/it]
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 2/2 [00:00<00:00, 52.38it/s]
+serving Bllossom/llama-3.2-Korean-Bllossom-3B on http://127.0.0.1:18001
+11/Jun/2026 15:38:28 127.0.0.1 "GET /health HTTP/1.1" 200 -
+11/Jun/2026 15:38:44 127.0.0.1 "GET /health HTTP/1.1" 200 -
+The following generation flags are not valid and may be ignored: ['top_p']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+11/Jun/2026 15:38:47 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:47 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:48 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:49 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:50 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:38:50 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:48 127.0.0.1 "GET /health HTTP/1.1" 200 -
+11/Jun/2026 15:40:50 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:50 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:50 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:51 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:52 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:53 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 15:40:53 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -

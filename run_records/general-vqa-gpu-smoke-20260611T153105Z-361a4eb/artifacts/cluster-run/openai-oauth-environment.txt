@@ -1,0 +1,8 @@
+cluster_run_id=general-vqa-gpu-smoke-20260611T153105Z-361a4eb
+git_sha=857ce5788a98c4cca36b5ea8f97648ff58974bfb
+CODEX_HOME=/root/work/.codex
+auth_file_present=yes
+node=v20.18.3
+npm=10.8.2
+codex=codex-cli 0.120.0
+openai_oauth_command=npx -y openai-oauth --host 127.0.0.1 --port 10531

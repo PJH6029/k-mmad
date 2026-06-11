@@ -1,0 +1,189 @@
+{
+  "created_at": "20260611T154320Z",
+  "mode": "general_vqa",
+  "benchmarks": [
+    "mme_realworld",
+    "blink",
+    "mmmu_pro",
+    "mega_bench"
+  ],
+  "sample_size": 1,
+  "mock_sanity_only": false,
+  "concurrency": 1,
+  "results": {
+    "mme_realworld": {
+      "created_at": "20260611T154327Z",
+      "benchmark_id": "mme_realworld",
+      "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mme_realworld/mme_realworld.json",
+      "sample_size": 1,
+      "mock_sanity_only": false,
+      "concurrency": 1,
+      "inference": {
+        "endpoint_provider": "openai_oauth",
+        "base_url": "http://127.0.0.1:10531/v1",
+        "model": "gpt-5.4",
+        "auth_mode": "none",
+        "api_key_env": "OPENAI_API_KEY"
+      },
+      "validation": {
+        "status": "passed",
+        "rows": 1,
+        "errors": []
+      },
+      "artifacts": {
+        "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mme_realworld/translation_smoke.jsonl",
+        "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mme_realworld/untranslated_fields.json",
+        "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mme_realworld/inspection_examples.json",
+        "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mme_realworld/translation_validation.json"
+      }
+    },
+    "blink": {
+      "created_at": "20260611T154335Z",
+      "benchmark_id": "blink",
+      "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/blink/blink.json",
+      "sample_size": 1,
+      "mock_sanity_only": false,
+      "concurrency": 1,
+      "inference": {
+        "endpoint_provider": "openai_oauth",
+        "base_url": "http://127.0.0.1:10531/v1",
+        "model": "gpt-5.4",
+        "auth_mode": "none",
+        "api_key_env": "OPENAI_API_KEY"
+      },
+      "validation": {
+        "status": "passed",
+        "rows": 1,
+        "errors": []
+      },
+      "artifacts": {
+        "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/translation_smoke.jsonl",
+        "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/untranslated_fields.json",
+        "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/inspection_examples.json",
+        "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/blink/translation_validation.json"
+      }
+    },
+    "mmmu_pro": {
+      "created_at": "20260611T154345Z",
+      "benchmark_id": "mmmu_pro",
+      "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mmmu_pro/mmmu_pro.json",
+      "sample_size": 1,
+      "mock_sanity_only": false,
+      "concurrency": 1,
+      "inference": {
+        "endpoint_provider": "openai_oauth",
+        "base_url": "http://127.0.0.1:10531/v1",
+        "model": "gpt-5.4",
+        "auth_mode": "none",
+        "api_key_env": "OPENAI_API_KEY"
+      },
+      "validation": {
+        "status": "passed",
+        "rows": 1,
+        "errors": []
+      },
+      "artifacts": {
+        "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mmmu_pro/translation_smoke.jsonl",
+        "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mmmu_pro/untranslated_fields.json",
+        "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mmmu_pro/inspection_examples.json",
+        "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mmmu_pro/translation_validation.json"
+      }
+    },
+    "mega_bench": {
+      "created_at": "20260611T154348Z",
+      "benchmark_id": "mega_bench",
+      "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mega_bench/mega_bench.json",
+      "sample_size": 1,
+      "mock_sanity_only": false,
+      "concurrency": 1,
+      "inference": {
+        "endpoint_provider": "openai_oauth",
+        "base_url": "http://127.0.0.1:10531/v1",
+        "model": "gpt-5.4",
+        "auth_mode": "none",
+        "api_key_env": "OPENAI_API_KEY"
+      },
+      "validation": {
+        "status": "passed",
+        "rows": 1,
+        "errors": []
+      },
+      "artifacts": {
+        "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mega_bench/translation_smoke.jsonl",
+        "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mega_bench/untranslated_fields.json",
+        "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mega_bench/inspection_examples.json",
+        "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/openai-oauth/mega_bench/translation_validation.json"
+      }
+    }
+  },
+  "registry": [
+    {
+      "benchmark_id": "mme_realworld",
+      "display_name": "MME-RealWorld",
+      "venue": "ICLR 2025",
+      "source_urls": [
+        "https://mme-realworld.github.io/home_page.html",
+        "https://openreview.net/forum?id=k5VHHgsRbi"
+      ],
+      "leaderboard_checked": "2026-06-11",
+      "record_files": [
+        "mme_realworld.json",
+        "annotations.json",
+        "questions.json",
+        "data.json",
+        "samples.jsonl"
+      ]
+    },
+    {
+      "benchmark_id": "blink",
+      "display_name": "BLINK",
+      "venue": "ECCV 2024",
+      "source_urls": [
+        "https://zeyofu.github.io/blink/",
+        "https://eval.ai/api/challenges/challenge/2287/"
+      ],
+      "leaderboard_checked": "2026-06-11",
+      "record_files": [
+        "blink.json",
+        "test.json",
+        "val.json",
+        "annotations.json",
+        "samples.jsonl"
+      ]
+    },
+    {
+      "benchmark_id": "mmmu_pro",
+      "display_name": "MMMU-Pro",
+      "venue": "ACL 2025",
+      "source_urls": [
+        "https://aclanthology.org/2025.acl-long.736/",
+        "https://mmmu-benchmark.github.io/"
+      ],
+      "leaderboard_checked": "2026-06-11",
+      "record_files": [
+        "mmmu_pro.json",
+        "validation.json",
+        "test.json",
+        "annotations.json",
+        "samples.jsonl"
+      ]
+    },
+    {
+      "benchmark_id": "mega_bench",
+      "display_name": "MEGA-Bench",
+      "venue": "ICLR 2025",
+      "source_urls": [
+        "https://tiger-ai-lab.github.io/MEGA-Bench/",
+        "https://huggingface.co/spaces/TIGER-Lab/MEGA-Bench"
+      ],
+      "leaderboard_checked": "2026-06-11",
+      "record_files": [
+        "mega_bench.json",
+        "tasks.json",
+        "samples.json",
+        "annotations.json",
+        "samples.jsonl"
+      ]
+    }
+  ]
+}

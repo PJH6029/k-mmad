@@ -1,0 +1,12 @@
+## dependency install
+2026-06-11T15:33:08Z
+Using uv pip --system to preserve preinstalled CUDA torch in /opt/conda.
+  File "<stdin>", line 4
+    print(f"{m}={getattr(mod, \"__version__\", \"import-ok\")}")
+                                                               ^
+SyntaxError: f-string expression part cannot include a backslash
+torch=2.5.1+cu124
+transformers=4.57.6
+accelerate=1.14.0
+sentencepiece=0.2.1
+safetensors=0.8.0

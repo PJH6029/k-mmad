@@ -1,0 +1,10 @@
+CODEX_HOME=/root/work/.codex
+/usr/bin/node
+/usr/bin/npm
+/usr/bin/npx
+/usr/bin/codex
+v20.18.3
+10.8.2
+codex-cli 0.120.0
+codex_auth_json=present
+auth_json_top_keys=last_refresh,tokens

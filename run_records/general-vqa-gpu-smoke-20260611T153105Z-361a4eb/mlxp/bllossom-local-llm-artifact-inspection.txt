@@ -1,0 +1,75 @@
+--- mme_realworld validation ---
+{
+  "status": "failed",
+  "rows": 1,
+  "errors": [
+    "row 0 translated field 'text_fields' item 3 has no Korean text"
+  ]
+}
+
+--- mme_realworld translated text_fields ---
+{
+  "text_fields": {
+    "question": "가로수 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금지, 주차 금",
+    "options": [
+      "학교 지구",
+      "B. 주차 금지",
+      "30",
+      "D. 도로가 닫혀 있습니다."
+    ]
+  }
+}
+--- blink validation ---
+{
+  "status": "passed",
+  "rows": 1,
+  "errors": []
+}
+
+--- blink translated text_fields ---
+{
+  "text_fields": {
+    "question": "어떤 물체가 카메라에서 더 가까운 거리에 있는지 확인하십시오.",
+    "options": {
+      "A": "빨간 사각형",
+      "B": "파란 공",
+      "C": "그들은 동일한 깊이에 있습니다.",
+      "D": "불확실하다"
+    },
+    "instruction": "두 판을 비교하여 표시된 물체를 비교하십시오."
+  }
+}
+--- mmmu_pro validation ---
+{
+  "status": "passed",
+  "rows": 1,
+  "errors": []
+}
+
+--- mmmu_pro translated text_fields ---
+{
+  "text_fields": {
+    "question": "전기회로에서 전류가 두 배가 되면 전류는 반복적으로 반감소합니다.",
+    "options": [
+      "A. 두 배가 됩니다.",
+      "B. 이는 반으로 나뉘어 있습니다.",
+      "C. 그대로 유지된다",
+      "D. 0이 됩니다."
+    ],
+    "instruction": "다음은 문제를 해결하기 위해 사용할 수 있는 옵션을 선택하세요."
+  }
+}
+--- mega_bench validation ---
+{
+  "status": "passed",
+  "rows": 1,
+  "errors": []
+}
+
+--- mega_bench translated text_fields ---
+{
+  "text_fields": {
+    "question": "2020년과 2021년 사이에 가장 큰 증가한 제품 카테고리는 무엇인가요?",
+    "instruction": "차트를 검토하고, 한 단어로 설명하십시오."
+  }
+}

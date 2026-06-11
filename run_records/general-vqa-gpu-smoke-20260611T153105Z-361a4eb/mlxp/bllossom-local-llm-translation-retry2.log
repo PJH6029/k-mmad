@@ -1,0 +1,39 @@
+## Bllossom local GPU LLM translation smoke retry after label preservation
+2026-06-11T15:40:48Z
+git_sha=857ce5788a98c4cca36b5ea8f97648ff58974bfb
+model=Bllossom/llama-3.2-Korean-Bllossom-3B
+{"status": "ok", "model": "Bllossom/llama-3.2-Korean-Bllossom-3B", "revision": null, "trust_remote_code": false}0, NVIDIA H200, 6973 MiB, 136184 MiB, 0 %
+general VQA translation smoke output: /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom
+## validate directory
+{
+  "status": "passed",
+  "benchmarks": [
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/blink/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mega_bench/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mme_realworld/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mmmu_pro/translation_smoke.jsonl"
+    }
+  ],
+  "errors": []
+}
+## post-run gpu
+0, NVIDIA H200, 6973 MiB, 136184 MiB, 50 %

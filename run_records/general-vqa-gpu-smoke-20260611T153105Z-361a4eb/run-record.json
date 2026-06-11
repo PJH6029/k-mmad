@@ -1,0 +1,124 @@
+{
+  "run_id": "general-vqa-gpu-smoke-20260611T153105Z-361a4eb",
+  "created_at": "2026-06-11T15:47:00Z",
+  "status": "passed",
+  "git_sha": "857ce5788a98c4cca36b5ea8f97648ff58974bfb",
+  "cluster_git_sha": "857ce5788a98c4cca36b5ea8f97648ff58974bfb",
+  "commands": [
+    "MLXP reservation rsv-jeonghunpark-20260612-0f9379 on production, managed_image_key=codex, 1x H200",
+    "python scripts/kmmad_minimal_openai_server.py --model Bllossom/llama-3.2-Korean-Bllossom-3B --host 127.0.0.1 --port 18001",
+    "python scripts/kmmad_translate_smoke.py --config <cluster-run>/local-gpu-bllossom-config.toml --dataset <dataset>/original/general-vqa --output-dir <dataset>/translated/smoke/<run-id>/local-llm-bllossom --benchmarks mme_realworld,blink,mmmu_pro,mega_bench --sample-size 1 --concurrency 1",
+    "npx -y openai-oauth --host 127.0.0.1 --port 10531",
+    "python scripts/kmmad_translate_smoke.py --config <cluster-run>/openai-oauth-config.toml --dataset <dataset>/original/general-vqa --output-dir <dataset>/translated/smoke/<run-id>/openai-oauth --benchmarks mme_realworld,blink,mmmu_pro,mega_bench --sample-size 1 --concurrency 1",
+    "uv run python scripts/kmmad_translate_smoke.py --validate-only run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom",
+    "uv run python scripts/kmmad_translate_smoke.py --validate-only run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth"
+  ],
+  "dataset": {
+    "root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data",
+    "general_vqa": {
+      "benchmarks": [
+        "mme_realworld",
+        "blink",
+        "mmmu_pro",
+        "mega_bench"
+      ],
+      "sample_size_per_benchmark": 1,
+      "sample_root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa",
+      "full_download_required_for_this_smoke": false,
+      "first_pass_full_download_required": false,
+      "mock_is_completion_evidence": false,
+      "requires_local_gpu_llm_evidence": true,
+      "requires_openai_oauth_evidence": true
+    },
+    "download_manifest": null,
+    "sanity_report": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-postcopy-validation.log"
+  },
+  "reservation": {
+    "project": "production",
+    "member": "jeonghunpark",
+    "purpose_prefix": "SKT Dokpamo - MMAD Translation",
+    "payload": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/reservation-payload.json",
+    "id": "rsv-jeonghunpark-20260612-0f9379",
+    "cancelled_at": "see run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/reservation-cancel-response.json",
+    "active_reason": null
+  },
+  "image_runtime": {
+    "image_path": "ghcr.io/pjh6029/snupi-personal-codex:20260414",
+    "image_digest": "sha256:24cdabf0f72a9469939e65f4e5250c2d83e38c8a47bd817e0f8ad33478f9c6fa",
+    "managed_image_key": "codex",
+    "command": "managed reservation shell; ephemeral package install with uv pip --system for transformers/accelerate/sentencepiece",
+    "health_check": {
+      "local_llm": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/bllossom-local-llm-health.json",
+      "openai_oauth_models": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/openai-oauth-models.json"
+    },
+    "image_manifest": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/codex-image-manifest-summary.json"
+  },
+  "translation": {
+    "mode": "general_vqa_dual_path_smoke",
+    "benchmarks": [
+      "mme_realworld",
+      "blink",
+      "mmmu_pro",
+      "mega_bench"
+    ],
+    "mock_sanity_only": false,
+    "local_gpu_llm_evidence": true,
+    "openai_oauth_evidence": true,
+    "api_key_contract_only": true,
+    "parallelism": {
+      "implemented": true,
+      "deterministic_order_tests": "tests/test_general_vqa_adapters.py"
+    }
+  },
+  "model": {
+    "local_gpu_llm": {
+      "identifier": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+      "revision": null,
+      "endpoint": "http://127.0.0.1:18001/v1",
+      "endpoint_provider": "local_openai_compatible",
+      "auth_mode": "none"
+    },
+    "openai_oauth": {
+      "identifier": "gpt-5.4",
+      "endpoint": "http://127.0.0.1:10531/v1",
+      "endpoint_provider": "openai_oauth",
+      "auth_mode": "none",
+      "models_seen": [
+        "gpt-5.4",
+        "gpt-5.4-mini",
+        "gpt-5.3-codex-spark",
+        "codex-auto-review"
+      ]
+    }
+  },
+  "artifacts": {
+    "translation_output": {
+      "local_gpu_llm": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom",
+      "openai_oauth": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth"
+    },
+    "untranslated_field_report": "per-benchmark untranslated_fields.json files under each artifact directory",
+    "validation_report": "per-benchmark translation_validation.json plus local-postcopy-validation.log",
+    "inspection_examples": "per-benchmark inspection_examples.json files under each artifact directory",
+    "checksums": {
+      "local_gpu_llm": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom.sha256",
+      "openai_oauth": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth.sha256"
+    },
+    "logs": [
+      "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/dependency-install.log",
+      "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/bllossom-local-llm-translation-retry2.log",
+      "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/mlxp/openai-oauth-translation-retry.log",
+      "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-postcopy-validation.log"
+    ]
+  },
+  "failures_retries": [
+    "Qwen/Qwen2.5-1.5B-Instruct smoke produced CJK/Hanja in some outputs; switched to Bllossom Korean 3B for local GPU LLM evidence.",
+    "Bllossom first attempt omitted Korean text for one numeric option; fixture wording and structural option-label preservation were added, then validation passed.",
+    "Initial openai-oauth run script missed PYTHONPATH for header contract check; fixed transient script and endpoint translation passed."
+  ],
+  "notes": [
+    "No paid live OpenAI API-key call was made; API-key behavior remains contract-tested locally.",
+    "openai-oauth was bound to 127.0.0.1 only; no public proxy exposed.",
+    "Reservation was cancelled after artifacts were copied and processes were stopped."
+  ],
+  "schema_version": 2
+}

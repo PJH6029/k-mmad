@@ -12,6 +12,7 @@ from typing import Any
 from kmmad_common import configured_path, find_sensitive_strings, load_config, sanitize_jsonable, utc_now, write_json
 
 REQUIRED_FIELDS = [
+    "schema_version",
     "run_id",
     "git_sha",
     "commands",
@@ -33,6 +34,7 @@ def git_sha() -> str:
 
 def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
     return {
+        "schema_version": 2,
         "run_id": run_id,
         "created_at": utc_now(),
         "status": "initialized",
@@ -44,6 +46,9 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
             "source": config["source"],
             "general_vqa": {
                 "benchmarks": config.get("general_vqa", {}).get("benchmarks", []),
+                "sample_size_per_benchmark": None,
+                "sample_root": config["paths"].get("general_vqa_original_subdir"),
+                "full_download_required_for_this_smoke": config.get("general_vqa", {}).get("first_pass_full_download_required", False),
                 "first_pass_full_download_required": config.get("general_vqa", {}).get("first_pass_full_download_required", False),
                 "mock_is_completion_evidence": config.get("general_vqa", {}).get("mock_is_completion_evidence", False),
                 "requires_local_gpu_llm_evidence": config.get("general_vqa", {}).get("requires_local_gpu_llm_evidence", True),
@@ -72,6 +77,9 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
             "mode": "mmad_or_general_vqa",
             "benchmarks": config.get("general_vqa", {}).get("benchmarks", []),
             "mock_sanity_only": config.get("general_vqa", {}).get("mock_is_completion_evidence", False) is False,
+            "local_gpu_llm_evidence": False,
+            "openai_oauth_evidence": False,
+            "api_key_contract_only": True,
             "parallelism": config.get("general_vqa", {}).get("parallelism", {}),
         },
         "model": {
@@ -82,17 +90,97 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
             "auth_mode": config["inference"].get("auth_mode", "none"),
             "api_key_env": config["inference"].get("api_key_env", "OPENAI_API_KEY"),
             "auth_secret_present": None,
+            "local_gpu_llm": {
+                "identifier": None,
+                "revision": None,
+                "endpoint": None,
+                "endpoint_provider": "local_openai_compatible",
+                "auth_mode": "none",
+            },
+            "openai_oauth": {
+                "identifier": None,
+                "endpoint": None,
+                "endpoint_provider": "openai_oauth",
+                "auth_mode": "none",
+                "models_seen": [],
+            },
         },
         "artifacts": {
             "translation_output": None,
             "untranslated_field_report": None,
             "validation_report": None,
             "inspection_examples": None,
+            "checksums": {},
             "logs": [],
         },
         "failures_retries": [],
         "notes": [],
     }
+
+
+def require_path(errors: list[str], obj: dict[str, Any], path: str) -> Any:
+    current: Any = obj
+    for part in path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            errors.append(f"missing required field: {path}")
+            return None
+        current = current[part]
+    return current
+
+
+def validate_general_vqa_schema(record: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if record.get("schema_version") != 2:
+        errors.append("schema_version must be 2")
+        return errors
+
+    for path in (
+        "dataset.general_vqa.benchmarks",
+        "dataset.general_vqa.first_pass_full_download_required",
+        "dataset.general_vqa.mock_is_completion_evidence",
+        "dataset.general_vqa.requires_local_gpu_llm_evidence",
+        "dataset.general_vqa.requires_openai_oauth_evidence",
+        "translation.mode",
+        "translation.benchmarks",
+        "translation.mock_sanity_only",
+        "translation.local_gpu_llm_evidence",
+        "translation.openai_oauth_evidence",
+        "translation.api_key_contract_only",
+        "translation.parallelism",
+    ):
+        require_path(errors, record, path)
+
+    if record.get("status") != "passed" or require_path(errors, record, "translation.mode") != "general_vqa_dual_path_smoke":
+        return errors
+
+    expected = {
+        "translation.mock_sanity_only": False,
+        "translation.local_gpu_llm_evidence": True,
+        "translation.openai_oauth_evidence": True,
+        "translation.api_key_contract_only": True,
+    }
+    for path, expected_value in expected.items():
+        value = require_path(errors, record, path)
+        if value is not None and value is not expected_value:
+            errors.append(f"{path} must be {expected_value!r} for passed general VQA dual-path records")
+
+    for path in (
+        "artifacts.translation_output.local_gpu_llm",
+        "artifacts.translation_output.openai_oauth",
+        "artifacts.checksums.local_gpu_llm",
+        "artifacts.checksums.openai_oauth",
+        "model.local_gpu_llm.identifier",
+        "model.local_gpu_llm.endpoint_provider",
+        "model.openai_oauth.identifier",
+        "model.openai_oauth.endpoint_provider",
+        "image_runtime.image_digest",
+        "reservation.id",
+        "reservation.cancelled_at",
+    ):
+        value = require_path(errors, record, path)
+        if value in (None, "", [], {}):
+            errors.append(f"{path} must be populated for passed general VQA dual-path records")
+    return errors
 
 
 def validate(record: dict[str, Any]) -> list[str]:
@@ -105,6 +193,8 @@ def validate(record: dict[str, Any]) -> list[str]:
     sensitive_paths = find_sensitive_strings(record)
     if sensitive_paths:
         errors.append("record contains unredacted secret-like values at: " + ", ".join(sensitive_paths[:10]))
+    if "schema_version" in record:
+        errors.extend(validate_general_vqa_schema(record))
     return errors
 
 

@@ -174,6 +174,10 @@ Preferred durable cluster layout:
 
 Local copies of actual translated sample artifacts must be downloaded under ignored `outputs/`, with sanitized run evidence under `run_records/` when appropriate. Verify remote/local SHA256 checksums and run secret scans before reporting completion.
 
+General VQA benchmark loading is fail-closed: each selected benchmark must expose one of its registered record filenames under its benchmark directory (for example `blink/blink.json`). The runner must not satisfy `blink` from an unrelated parseable file in the dataset root.
+
+Directory-level `--validate-only` checks exact benchmark coverage from `general_vqa_translation_summary.json` and the full evidence bundle, not just discovered JSONL rows: each summary-listed benchmark must have `translation_smoke.jsonl`, `untranslated_fields.json`, `translation_validation.json`, `inspection_examples.json`, and `translation_smoke_summary.json`, and no unexpected benchmark output directory should be present.
+
 ### Local GPU LLM evidence path
 
 1. Run local adapter/mock/API-contract checks first.
@@ -183,6 +187,7 @@ Local copies of actual translated sample artifacts must be downloaded under igno
 5. Start the selected local OpenAI-compatible LLM endpoint or approved local inference shim.
 6. Translate 1-3 sample records per selected benchmark.
 7. Validate outputs, preserve run evidence, copy artifacts locally, and cancel the reservation promptly.
+8. Record the resolved image digest or an archived image manifest summary in the final run record.
 
 ### openai-oauth endpoint evidence path
 

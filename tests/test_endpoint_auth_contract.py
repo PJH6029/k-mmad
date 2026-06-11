@@ -125,8 +125,9 @@ class EndpointAuthContractTest(unittest.TestCase):
         self.assertNotIn("test-secret-token", str(ctx.exception))
 
     def test_run_record_validation_rejects_unredacted_secret_without_echoing_it(self) -> None:
-        secret = "sk-testsecret1234567890"
+        secret = "test-openai-like-secret-1234567890"
         record = {
+            "schema_version": 2,
             "run_id": "contract-test",
             "git_sha": "HEAD",
             "commands": [f"curl -H 'Authorization: Bearer {secret}' http://127.0.0.1"],
@@ -191,6 +192,52 @@ class EndpointAuthContractTest(unittest.TestCase):
         self.assertNotIn("mlxp-jupyter-secret", sanitized)
         self.assertNotIn("oauth-access-secret", sanitized)
         self.assertIn('"jupyter_token":"<redacted>"', sanitized)
+
+    def test_passed_general_vqa_dual_path_record_requires_evidence_fields(self) -> None:
+        record = {
+            "schema_version": 2,
+            "run_id": "general-vqa-contract",
+            "git_sha": "HEAD",
+            "commands": [],
+            "dataset": {
+                "general_vqa": {
+                    "benchmarks": ["blink"],
+                    "first_pass_full_download_required": False,
+                    "mock_is_completion_evidence": False,
+                    "requires_local_gpu_llm_evidence": True,
+                    "requires_openai_oauth_evidence": True,
+                }
+            },
+            "artifacts": {
+                "translation_output": {"local_gpu_llm": "local-path"},
+                "checksums": {},
+            },
+            "reservation": {"id": "rsv-test", "cancelled_at": "2026-06-11T00:00:00Z"},
+            "image_runtime": {},
+            "model": {
+                "local_gpu_llm": {
+                    "identifier": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+                    "endpoint_provider": "local_openai_compatible",
+                },
+                "openai_oauth": {"identifier": "gpt-5.4", "endpoint_provider": "openai_oauth"},
+            },
+            "translation": {
+                "mode": "general_vqa_dual_path_smoke",
+                "benchmarks": ["blink"],
+                "mock_sanity_only": False,
+                "local_gpu_llm_evidence": True,
+                "openai_oauth_evidence": True,
+                "api_key_contract_only": True,
+                "parallelism": {},
+            },
+            "status": "passed",
+        }
+
+        errors = "\n".join(validate_run_record(record))
+
+        self.assertIn("artifacts.translation_output.openai_oauth must be populated", errors)
+        self.assertIn("artifacts.checksums.local_gpu_llm must be populated", errors)
+        self.assertIn("artifacts.checksums.openai_oauth must be populated", errors)
 
 
 if __name__ == "__main__":

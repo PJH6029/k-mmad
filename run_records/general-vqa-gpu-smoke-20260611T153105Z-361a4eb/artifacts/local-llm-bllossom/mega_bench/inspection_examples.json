@@ -1,0 +1,88 @@
+[
+  {
+    "benchmark_id": "mega_bench",
+    "benchmark_name": "MEGA-Bench",
+    "source_id": "mega-001",
+    "split": "core",
+    "task": "chart_understanding",
+    "media": [
+      "images/mega-001.png"
+    ],
+    "source": {
+      "benchmark_id": "mega_bench",
+      "benchmark_name": "MEGA-Bench",
+      "source_id": "mega-001",
+      "split": "core",
+      "task": "chart_understanding",
+      "media": [
+        "images/mega-001.png"
+      ],
+      "text_fields": {
+        "question": "Which product category has the largest increase from 2020 to 2021?",
+        "instruction": "Inspect the chart and answer with one short phrase."
+      },
+      "preserve_fields": {
+        "target": "electronics",
+        "output_format": "short phrase",
+        "metric": "exact_match",
+        "task_name": "chart_understanding",
+        "application": "Data analysis",
+        "sample_id": "mega-001",
+        "split": "core"
+      },
+      "skip_fields": {
+        "rubric": "The answer must name exactly one category."
+      },
+      "translation_scope": [
+        "question",
+        "instruction"
+      ],
+      "metadata": {
+        "venue": "ICLR 2025",
+        "leaderboard_checked": "2026-06-11",
+        "source_urls": [
+          "https://tiger-ai-lab.github.io/MEGA-Bench/",
+          "https://huggingface.co/spaces/TIGER-Lab/MEGA-Bench"
+        ],
+        "source_index": 0
+      },
+      "source_record": {
+        "sample_id": "mega-001",
+        "split": "core",
+        "task_name": "chart_understanding",
+        "application": "Data analysis",
+        "images": [
+          "images/mega-001.png"
+        ],
+        "instruction": "Inspect the chart and answer with one short phrase.",
+        "task_prompt": "Which product category has the largest increase from 2020 to 2021?",
+        "target": "electronics",
+        "output_format": "short phrase",
+        "metric": "exact_match",
+        "rubric": "The answer must name exactly one category."
+      }
+    },
+    "translated": {
+      "text_fields": {
+        "question": "2020년과 2021년 사이에 가장 큰 증가한 제품 카테고리는 무엇인가요?",
+        "instruction": "차트를 검토하고, 한 단어로 설명하십시오."
+      }
+    },
+    "translation_scope": [
+      "question",
+      "instruction"
+    ],
+    "preserve_fields": {
+      "target": "electronics",
+      "output_format": "short phrase",
+      "metric": "exact_match",
+      "task_name": "chart_understanding",
+      "application": "Data analysis",
+      "sample_id": "mega-001",
+      "split": "core"
+    },
+    "skip_fields": {
+      "rubric": "The answer must name exactly one category."
+    }
+  }
+]

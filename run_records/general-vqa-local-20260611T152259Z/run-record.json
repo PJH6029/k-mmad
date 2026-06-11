@@ -41,7 +41,10 @@
       "first_pass_full_download_required": false,
       "mock_is_completion_evidence": false,
       "requires_local_gpu_llm_evidence": true,
-      "requires_openai_oauth_evidence": true
+      "requires_openai_oauth_evidence": true,
+      "sample_size_per_benchmark": 1,
+      "sample_root": "tests/fixtures/general_vqa",
+      "full_download_required_for_this_smoke": false
     },
     "download_manifest": null,
     "sanity_report": null
@@ -74,7 +77,10 @@
     "parallelism": {
       "default_concurrency": 2,
       "deterministic_order": true
-    }
+    },
+    "local_gpu_llm_evidence": false,
+    "openai_oauth_evidence": false,
+    "api_key_contract_only": true
   },
   "model": {
     "identifier": "Bllossom/llama-3.2-Korean-Bllossom-3B",
@@ -93,5 +99,6 @@
     "logs": []
   },
   "failures_retries": [],
-  "notes": []
+  "notes": [],
+  "schema_version": 2
 }

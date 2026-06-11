@@ -1,0 +1,4 @@
+/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/blink/blink.json
+/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mega_bench/mega_bench.json
+/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mme_realworld/mme_realworld.json
+/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mmmu_pro/mmmu_pro.json

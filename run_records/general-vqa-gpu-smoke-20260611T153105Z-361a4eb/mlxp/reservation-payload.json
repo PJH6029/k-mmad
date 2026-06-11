@@ -1,0 +1,15 @@
+{
+  "node_id": "1",
+  "gpu_start": 2,
+  "gpu_count": 1,
+  "gpu_indices": [],
+  "start_at": "2026-06-12T00:00:00+09:00",
+  "end_at": "2026-06-12T02:00:00+09:00",
+  "purpose": "SKT Dokpamo - MMAD Translation - General VQA local GPU LLM smoke 361a4eb",
+  "managed_image_key": "codex",
+  "registry_profile_key": "",
+  "image_path": "",
+  "command": [],
+  "args": [],
+  "actor_name": "Codex"
+}

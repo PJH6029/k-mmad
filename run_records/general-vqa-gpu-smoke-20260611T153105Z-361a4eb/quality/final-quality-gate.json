@@ -1,0 +1,36 @@
+{
+  "aiSlopCleaner": {
+    "status": "passed",
+    "evidence": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/ai-slop-cleanup-report.md"
+  },
+  "verification": {
+    "status": "passed",
+    "commands": [
+      "uv run python -m unittest discover -s tests",
+      "uv run python -m compileall scripts tests",
+      "uvx ruff check README.md configs/kmmad_translation_smoke.toml docs/kmmad_translation_smoke_runbook.md scripts tests",
+      "PYTHONPATH=scripts uvx pyright scripts tests",
+      "uv run python scripts/kmmad_translate_smoke.py --validate-only run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom",
+      "uv run python scripts/kmmad_translate_smoke.py --validate-only run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth",
+      "uv run python scripts/kmmad_run_record.py validate run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/run-record.json",
+      "uv run python scripts/kmmad_run_record.py validate run_records/general-vqa-local-20260611T152259Z/run-record.json",
+      "git diff --check"
+    ],
+    "evidence": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/final-verification-after-second-review-fixes.log and quality/post-clean-verification.log"
+  },
+  "codeReview": {
+    "recommendation": "APPROVE",
+    "architectStatus": "CLEAR",
+    "evidence": "Independent code-reviewer APPROVE and architect CLEAR reports saved under run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/.",
+    "independentReview": {
+      "codeReviewer": {
+        "agentRole": "code-reviewer",
+        "evidence": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/final-code-review.md"
+      },
+      "architect": {
+        "agentRole": "architect",
+        "evidence": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/final-architect-review.md"
+      }
+    }
+  }
+}

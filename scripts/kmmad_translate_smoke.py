@@ -35,6 +35,13 @@ KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
+BENCHMARK_ARTIFACT_FILES = (
+    "translation_smoke.jsonl",
+    "untranslated_fields.json",
+    "inspection_examples.json",
+    "translation_validation.json",
+    "translation_smoke_summary.json",
+)
 
 
 def mock_translate(text: str) -> str:
@@ -250,6 +257,15 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def resolve_benchmark_root(dataset_root: Path, benchmark_id: str) -> Path | None:
+    benchmark_root = dataset_root / benchmark_id
+    if benchmark_root.exists():
+        return benchmark_root
+    if dataset_root.is_file():
+        return dataset_root
+    return None
+
+
 def has_korean(value: Any) -> bool:
     return any(KOREAN_RE.search(text) for text in flatten_text(value))
 
@@ -272,7 +288,42 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
     if output.is_dir():
         benchmark_reports = []
         errors: list[str] = []
-        for path in sorted(output.glob("*/translation_smoke.jsonl")):
+        summary_path = output / "general_vqa_translation_summary.json"
+        expected_benchmarks: list[str] = []
+        if not summary_path.exists():
+            errors.append(f"general VQA summary missing: {summary_path}")
+        else:
+            try:
+                summary = json.loads(summary_path.read_text(encoding="utf-8"))
+                expected_benchmarks = [str(item) for item in summary.get("benchmarks", [])]
+                if not expected_benchmarks:
+                    errors.append(f"general VQA summary has no benchmarks: {summary_path}")
+            except (OSError, json.JSONDecodeError) as exc:
+                errors.append(f"general VQA summary is not readable JSON: {summary_path}: {exc}")
+        discovered_benchmarks = sorted(path.parent.name for path in output.glob("*/translation_smoke.jsonl"))
+        if expected_benchmarks:
+            missing_benchmarks = sorted(set(expected_benchmarks) - set(discovered_benchmarks))
+            unexpected_benchmarks = sorted(set(discovered_benchmarks) - set(expected_benchmarks))
+            errors.extend(f"benchmark output missing: {benchmark_id}" for benchmark_id in missing_benchmarks)
+            errors.extend(f"unexpected benchmark output: {benchmark_id}" for benchmark_id in unexpected_benchmarks)
+            benchmarks_to_validate = expected_benchmarks
+        else:
+            benchmarks_to_validate = discovered_benchmarks
+        for benchmark_id in benchmarks_to_validate:
+            path = output / benchmark_id / "translation_smoke.jsonl"
+            if not path.exists():
+                continue
+            missing = [name for name in BENCHMARK_ARTIFACT_FILES if not (path.parent / name).exists()]
+            errors.extend(f"{path.parent}: required artifact missing: {name}" for name in missing)
+            try:
+                artifact_summary = json.loads((path.parent / "translation_smoke_summary.json").read_text(encoding="utf-8"))
+                if artifact_summary.get("benchmark_id") != benchmark_id:
+                    errors.append(f"{path.parent}: translation summary benchmark_id mismatch: {artifact_summary.get('benchmark_id')!r}")
+            except (OSError, json.JSONDecodeError) as exc:
+                errors.append(f"{path.parent}: translation summary is not readable JSON: {exc}")
+            for row_idx, row in enumerate(read_jsonl(path)):
+                if row.get("benchmark_id") != benchmark_id:
+                    errors.append(f"{path}: row {row_idx} benchmark_id mismatch: {row.get('benchmark_id')!r}")
             sub_report = path.with_name("untranslated_fields.json")
             result = validate_output(path, sub_report if sub_report.exists() else None)
             result["path"] = str(path)
@@ -412,7 +463,12 @@ def main(argv: list[str] | None = None) -> int:
         }
         failed = False
         for benchmark_id in benchmark_ids:
-            benchmark_root = dataset_root / benchmark_id if (dataset_root / benchmark_id).exists() else dataset_root
+            benchmark_root = resolve_benchmark_root(dataset_root, benchmark_id)
+            if benchmark_root is None:
+                expected_root = dataset_root / benchmark_id
+                overall["results"][benchmark_id] = {"status": "failed", "errors": [f"expected benchmark directory missing: {expected_root}"]}
+                failed = True
+                continue
             record_path, rows = load_benchmark_sample(benchmark_root, benchmark_id, sample_size, int(config["smoke"].get("sample_seed", 6029)))
             if not rows:
                 overall["results"][benchmark_id] = {"status": "failed", "errors": [f"no parseable records found under {benchmark_root}"]}

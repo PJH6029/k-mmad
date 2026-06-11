@@ -1,0 +1,26 @@
+{
+  "created_at": "20260611T154052Z",
+  "benchmark_id": "mmmu_pro",
+  "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/mmmu_pro/mmmu_pro.json",
+  "sample_size": 1,
+  "mock_sanity_only": false,
+  "concurrency": 1,
+  "inference": {
+    "endpoint_provider": "local_openai_compatible",
+    "base_url": "http://127.0.0.1:18001/v1",
+    "model": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+    "auth_mode": "none",
+    "api_key_env": "OPENAI_API_KEY"
+  },
+  "validation": {
+    "status": "passed",
+    "rows": 1,
+    "errors": []
+  },
+  "artifacts": {
+    "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mmmu_pro/translation_smoke.jsonl",
+    "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mmmu_pro/untranslated_fields.json",
+    "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mmmu_pro/inspection_examples.json",
+    "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm-bllossom/mmmu_pro/translation_validation.json"
+  }
+}

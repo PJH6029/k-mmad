@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import threading
 import time
 import unittest
@@ -17,7 +18,9 @@ from kmmad_translate_smoke import (  # noqa: E402
     build_request_headers,
     build_benchmark_translation_row,
     configured_concurrency,
+    resolve_benchmark_root,
     translate_rows_ordered,
+    validate_output,
 )
 
 FIXTURE_ROOT = ROOT / "tests" / "fixtures" / "general_vqa"
@@ -82,6 +85,33 @@ class GeneralVqaAdapterTest(unittest.TestCase):
                     self.assertIn("rubric", row["skip_fields"])
                 if benchmark_id == "mmmu_pro":
                     self.assertIn("ocr_text", row["skip_fields"])
+
+    def test_loader_fails_closed_without_benchmark_named_record(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "unrelated.json").write_text(
+                json.dumps([{"question": "Wrong file", "answer": "A"}]),
+                encoding="utf-8",
+            )
+
+            record_path, records = load_benchmark_sample(root, "blink", sample_size=1, seed=1)
+
+        self.assertIsNone(record_path)
+        self.assertEqual(records, [])
+
+    def test_missing_benchmark_directory_does_not_scan_other_benchmark_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            other = root / "mme_realworld"
+            other.mkdir()
+            (other / "annotations.json").write_text(
+                json.dumps([{"question": "Wrong benchmark", "answer": "A"}]),
+                encoding="utf-8",
+            )
+
+            benchmark_root = resolve_benchmark_root(root, "blink")
+
+        self.assertIsNone(benchmark_root)
 
     def test_parallel_translation_preserves_input_order(self) -> None:
         rows = [
@@ -162,6 +192,59 @@ class GeneralVqaAdapterTest(unittest.TestCase):
             translated["translated"]["text_fields"]["options"],
             ["A. 한국어 번역 초안: A. School zone", "B) 한국어 번역 초안: B) No parking"],
         )
+
+    def test_directory_validation_requires_full_artifact_bundle(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            benchmark_dir = root / "blink"
+            benchmark_dir.mkdir()
+            (benchmark_dir / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "benchmark_id": "blink",
+                        "source_id": "row-1",
+                        "source": {"id": "row-1"},
+                        "translated": {"text_fields": {"question": "한국어 질문"}},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (benchmark_dir / "untranslated_fields.json").write_text("{}", encoding="utf-8")
+
+            result = validate_output(root)
+
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("general_vqa_translation_summary.json" in error for error in result["errors"]))
+        self.assertTrue(any("inspection_examples.json" in error for error in result["errors"]))
+        self.assertTrue(any("translation_smoke_summary.json" in error for error in result["errors"]))
+
+    def test_directory_validation_requires_summary_benchmark_coverage(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "general_vqa_translation_summary.json").write_text(
+                json.dumps({"benchmarks": ["blink", "mega_bench"]}),
+                encoding="utf-8",
+            )
+            benchmark_dir = root / "blink"
+            benchmark_dir.mkdir()
+            row = {
+                "benchmark_id": "blink",
+                "source_id": "row-1",
+                "source": {"id": "row-1"},
+                "translated": {"text_fields": {"question": "한국어 질문"}},
+            }
+            (benchmark_dir / "translation_smoke.jsonl").write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            (benchmark_dir / "untranslated_fields.json").write_text("{}", encoding="utf-8")
+            (benchmark_dir / "inspection_examples.json").write_text("[]", encoding="utf-8")
+            (benchmark_dir / "translation_validation.json").write_text("{}", encoding="utf-8")
+            (benchmark_dir / "translation_smoke_summary.json").write_text(json.dumps({"benchmark_id": "blink"}), encoding="utf-8")
+
+            result = validate_output(root)
+
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("benchmark output missing: mega_bench" in error for error in result["errors"]))
 
 
 class OpenAiOauthAliasContractTest(unittest.TestCase):

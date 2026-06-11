@@ -1,0 +1,13 @@
+whoami=root
+pwd=/root
+CODEX_HOME=/root/work/.codex
+/usr/bin/git
+/usr/local/bin/uv
+/opt/conda/bin/python
+/opt/conda/bin/python3
+/usr/bin/nvidia-smi
+0, NVIDIA H200, 143771 MiB, 143156 MiB
+repo_exists=yes
+dataset_root_exists=yes
+true
+e9333b2

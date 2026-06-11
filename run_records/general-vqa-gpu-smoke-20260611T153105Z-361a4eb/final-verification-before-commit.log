@@ -1,0 +1,83 @@
+## final verification before commit
+2026-06-11T16:15:10Z
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/general_vqa'...
+Listing 'tests/fixtures/general_vqa/blink'...
+Listing 'tests/fixtures/general_vqa/mega_bench'...
+Listing 'tests/fixtures/general_vqa/mme_realworld'...
+Listing 'tests/fixtures/general_vqa/mmmu_pro'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
+All checks passed!
+0 errors, 0 warnings, 0 informations
+{
+  "status": "passed",
+  "benchmarks": [
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom/mme_realworld/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom/blink/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom/mmmu_pro/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/local-llm-bllossom/mega_bench/translation_smoke.jsonl"
+    }
+  ],
+  "errors": []
+}
+{
+  "status": "passed",
+  "benchmarks": [
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth/mme_realworld/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth/blink/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth/mmmu_pro/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/artifacts/openai-oauth/mega_bench/translation_smoke.jsonl"
+    }
+  ],
+  "errors": []
+}
+{
+  "status": "passed",
+  "errors": []
+}
+{
+  "status": "passed",
+  "errors": []
+}
+staged secret scan passed

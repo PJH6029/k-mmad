@@ -1,0 +1,6 @@
+## local GPU LLM translation smoke
+2026-06-11T15:35:23Z
+git_sha=361a4eb31f252b9edfff60ccb9e3606d3bbd50e4
+command=python scripts/kmmad_translate_smoke.py --config /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/runs/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-gpu-config.toml --dataset /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa --output-dir /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm --benchmarks mme_realworld,blink,mmmu_pro,mega_bench --sample-size 1 --concurrency 1
+0, NVIDIA H200, 3661 MiB, 139496 MiB, 0 %
+general VQA translation smoke output: /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm

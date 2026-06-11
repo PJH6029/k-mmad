@@ -1,0 +1,5 @@
+{
+  "image": "ghcr.io/pjh6029/snupi-personal-codex:20260414",
+  "digest": "sha256:24cdabf0f72a9469939e65f4e5250c2d83e38c8a47bd817e0f8ad33478f9c6fa",
+  "source": "docker manifest inspect --verbose with temporary GHCR auth"
+}

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
-from kmmad_common import get_first, load_first_records, pick_sample, read_records
+from kmmad_common import get_first, pick_sample, read_records
 
 
 @dataclass(frozen=True)
@@ -244,16 +244,16 @@ def benchmark_record_files(root: Path, spec: BenchmarkSpec) -> list[Path]:
 
 def load_benchmark_records(root: Path, benchmark_id: str) -> tuple[Path | None, list[dict[str, Any]]]:
     spec = BENCHMARKS[normalize_benchmark_id(benchmark_id)]
+    if root.is_file():
+        if root.name not in spec.record_files:
+            return None, []
+        records = read_records(root)
+        return (root, records) if records else (None, [])
     for path in benchmark_record_files(root, spec):
         records = read_records(path)
         if records:
             return path, records
-    # Allow direct file/directory fallback for fixtures named differently.
-    if root.is_file():
-        records = read_records(root)
-        return (root, records) if records else (None, [])
-    record_path, records = load_first_records(root)
-    return record_path, records
+    return None, []
 
 
 def load_benchmark_sample(root: Path, benchmark_id: str, sample_size: int, seed: int) -> tuple[Path | None, list[dict[str, Any]]]:

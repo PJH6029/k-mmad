@@ -1,0 +1,4 @@
+8b2344ba6f13af5aea3fdb6be32a403c362b193c2e90d488b980b3bc4d3628fd  run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/run-record.json
+16c13cebe0e0622b92486f11274a1b2fcc51ea207c76ea4f1b515082070e667f  run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/final-verification-before-commit.log
+16c13cebe0e0622b92486f11274a1b2fcc51ea207c76ea4f1b515082070e667f  run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/post-clean-verification.log
+4c12e9ef29e22b773a46452bbd6cc0581038737c8faeec252f9f4227af342c9e  run_records/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/quality/final-quality-gate.json

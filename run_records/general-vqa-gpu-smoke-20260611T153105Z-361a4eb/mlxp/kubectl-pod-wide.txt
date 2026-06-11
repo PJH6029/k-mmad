@@ -1,0 +1,4 @@
+NAME                                    READY   STATUS    RESTARTS   AGE   IP       NODE     NOMINATED NODE   READINESS GATES
+prod-rsv-jeonghunpark-20260612-0f9379   0/1     Pending   0          3s    <none>   <none>   <none>           <none>
+NAME                                    READY   STATUS    RESTARTS   AGE   IP              NODE             NOMINATED NODE   READINESS GATES
+prod-rsv-jeonghunpark-20260612-0f9379   1/1     Running   0          23s   198.18.90.215   h200-03-w-18fd   <none>           <none>

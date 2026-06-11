@@ -1,0 +1,6 @@
+## local GPU LLM translation smoke retry after prompt guard
+2026-06-11T15:36:37Z
+git_sha=5bd68f3fb770abed99fbf926882aad8126b43f4f
+model=Qwen/Qwen2.5-1.5B-Instruct
+{"status": "ok", "model": "Qwen/Qwen2.5-1.5B-Instruct", "revision": null, "trust_remote_code": false}0, NVIDIA H200, 3877 MiB, 139280 MiB, 0 %
+general VQA translation smoke output: /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa-gpu-smoke-20260611T153105Z-361a4eb/local-llm

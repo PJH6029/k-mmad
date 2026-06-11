@@ -1,0 +1,77 @@
+--- mme_realworld validation ---
+{
+  "status": "passed",
+  "rows": 1,
+  "errors": []
+}
+
+--- mme_realworld translated text_fields ---
+{
+  "text_fields": {
+    "question": "도로 표지판에 무엇이 경고를 보여주는가요?",
+    "options": [
+      "학교 도로",
+      "주차 금지",
+      "속도 제한 30",
+      "도로가 막혀있어요"
+    ]
+  }
+}
+--- blink validation ---
+{
+  "status": "passed",
+  "rows": 1,
+  "errors": []
+}
+
+--- blink translated text_fields ---
+{
+  "text_fields": {
+    "question": "비행기 가까운 것 중에서 무엇이 더 가깝다?",
+    "options": {
+      "A": "빨간 쪽지",
+      "B": "파란 구름",
+      "C": "그들은 같은 깊이에 있습니다.",
+      "D": "불가능합니다"
+    },
+    "instruction": "두 장면의 표시된 물체를 비교합니다."
+  }
+}
+--- mmmu_pro validation ---
+{
+  "status": "failed",
+  "rows": 1,
+  "errors": [
+    "row 0 translated field 'text_fields' item 5 contains CJK/Hanja characters"
+  ]
+}
+
+--- mmmu_pro translated text_fields ---
+{
+  "text_fields": {
+    "question": "다음과 같이 전기적 연결을 변경하면 전류는 무엇에 영향을 받나요?",
+    "options": [
+      "다시 한 번",
+      "다운로드",
+      "그것은 변하지 않습니다.",
+      "다. 0이 된다."
+    ],
+    "instruction": "다음 중哪个選項이 올바르게 설명합니다?"
+  }
+}
+--- mega_bench validation ---
+{
+  "status": "failed",
+  "rows": 1,
+  "errors": [
+    "row 0 translated field 'text_fields' item 1 contains CJK/Hanja characters"
+  ]
+}
+
+--- mega_bench translated text_fields ---
+{
+  "text_fields": {
+    "question": "2021년과 2020년 사이에 가장 큰 증가를 보인 제품 카테고리는 무엇입니까?",
+    "instruction": "표를 체크하고 단순한一句话로 답하세요."
+  }
+}

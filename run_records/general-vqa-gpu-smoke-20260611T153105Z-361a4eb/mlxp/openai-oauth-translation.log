@@ -1,0 +1,38 @@
+## openai-oauth endpoint translation smoke
+2026-06-11T15:43:09Z
+git_sha=857ce5788a98c4cca36b5ea8f97648ff58974bfb
+endpoint_provider=openai_oauth
+base_url=http://127.0.0.1:10531/v1
+model=gpt-5.4
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "gpt-5.4",
+            "object": "model",
+            "created": 0,
+            "owned_by": "codex-oauth"
+        },
+        {
+            "id": "gpt-5.4-mini",
+            "object": "model",
+            "created": 0,
+            "owned_by": "codex-oauth"
+        },
+        {
+            "id": "gpt-5.3-codex-spark",
+            "object": "model",
+            "created": 0,
+            "owned_by": "codex-oauth"
+        },
+        {
+            "id": "codex-auto-review",
+            "object": "model",
+            "created": 0,
+            "owned_by": "codex-oauth"
+        }
+    ]
+}
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ModuleNotFoundError: No module named 'kmmad_translate_smoke'

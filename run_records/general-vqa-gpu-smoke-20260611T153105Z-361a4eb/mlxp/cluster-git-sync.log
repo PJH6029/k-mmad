@@ -1,0 +1,10 @@
+before_sha=e9333b2ea06b2cc2cdb69228a31f4fc4c2584eb4
+status_before:
+?? run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/
+Your branch is behind 'origin/main' by 3 commits, and can be fast-forwarded.
+  (use "git pull" to update your local branch)
+HEAD is now at 361a4eb Generalize VQA translation prompt
+after_sha=361a4eb31f252b9edfff60ccb9e3606d3bbd50e4
+status_after:
+?? run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/endpoint/models-curl.err
+?? run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/endpoint/openai-oauth.pid

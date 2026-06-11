@@ -1,0 +1,18 @@
+{
+  "created_at": "20260611T154335Z",
+  "benchmark_id": "blink",
+  "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa/blink/blink.json",
+  "sample_size": 1,
+  "translated_scope": [
+    "instruction",
+    "options",
+    "question"
+  ],
+  "untranslated_text_fields": {
+    "answer": 1,
+    "split": 1,
+    "task": 1,
+    "uid": 1
+  },
+  "missing_configured_translation_fields": {}
+}
