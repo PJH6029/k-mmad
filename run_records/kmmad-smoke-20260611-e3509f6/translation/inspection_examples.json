@@ -1,0 +1,68 @@
+[
+  {
+    "source": {
+      "query_image": "DS-MVTec/pill/image/color/005.png",
+      "question": "There is a defect in the object. What is the appearance of the defect?",
+      "options": "A: Discrete red speckles.\nB: Red smudging along the edge.\nC: A chip on the edge.\nD: A crack across the pill.",
+      "answer": "B",
+      "template_image": "MVTec-AD/pill/train/good/019.png",
+      "mask": "DS-MVTec/pill/image/rgb_mask/color/005_rgb_mask.png"
+    },
+    "translated": {
+      "question": "결함이 있는 물체의 외관은 무엇인가요?",
+      "options": "A: 결함.\nB: 반점이 가득한 가장자리.\nC: 가장자리에 결함.\nD: 알약에 균열."
+    },
+    "translation_scope": [
+      "question",
+      "options",
+      "caption"
+    ],
+    "missing_translation_scope": [
+      "caption"
+    ]
+  },
+  {
+    "source": {
+      "query_image": "DS-MVTec/pill/image/crack/002.png",
+      "question": "There is a defect in the object. What is the type of the defect?",
+      "options": "A: Scratch.\nB: Deformation.\nC: Crack.\nD: Discoloration.",
+      "answer": "C",
+      "template_image": "MVTec-AD/pill/train/good/266.png",
+      "mask": "DS-MVTec/pill/image/rgb_mask/crack/002_rgb_mask.png"
+    },
+    "translated": {
+      "question": "결함의 종류는 무엇인가요?",
+      "options": "A: 긁힘.\nB: 변형.\nC: 균열.\nD: 변색."
+    },
+    "translation_scope": [
+      "question",
+      "options",
+      "caption"
+    ],
+    "missing_translation_scope": [
+      "caption"
+    ]
+  },
+  {
+    "source": {
+      "query_image": "DS-MVTec/pill/image/good/011.png",
+      "question": "What kind of product is in the image?",
+      "options": "A: An oval-shaped pill.\nB: A whiteboard eraser.\nC: A metal gear.\nD: A piece of modern art.",
+      "answer": "C",
+      "template_image": "MVTec-AD/pill/train/good/115.png",
+      "mask": ""
+    },
+    "translated": {
+      "question": "이 이미지에 있는 제품의 종류는 무엇인가요?",
+      "options": "A: 결함 모양의 알약.\nB: 화이트보드 지우개.\nC: 금속 기계 부품.\nD: 현대 미술 작품."
+    },
+    "translation_scope": [
+      "question",
+      "options",
+      "caption"
+    ],
+    "missing_translation_scope": [
+      "caption"
+    ]
+  }
+]

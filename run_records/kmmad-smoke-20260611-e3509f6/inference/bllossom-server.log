@@ -1,0 +1,21 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN_ENV_NAME_REDACTED_ENV_NAME_REDACTED to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+
+Loading weights:   0%|          | 0/254 [00:00<?, ?it/s]
+Loading weights: 100%|██████████| 254/254 [00:00<00:00, 12110.14it/s]
+serving Bllossom/llama-3.2-Korean-Bllossom-3B on http://127.0.0.1:8000
+11/Jun/2026 07:09:26 127.0.0.1 "GET /health HTTP/1.1" 200 -
+[transformers] Ignoring clean_up_tokenization_spaces=True for BPE tokenizer TokenizersBackend. The clean_up_tokenization post-processing step is designed for WordPiece tokenizers and is destructive for BPE (it strips spaces before punctuation). Set clean_up_tokenization_spaces=False to suppress this warning, or set clean_up_tokenization_spaces_for_bpe_even_though_it_will_corrupt_output=True to force cleanup anyway.
+11/Jun/2026 07:09:27 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:09:27 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:09:28 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:09:28 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:09:28 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:09:28 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:28 127.0.0.1 "GET /health HTTP/1.1" 200 -
+11/Jun/2026 07:10:29 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:29 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:29 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:29 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:30 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -
+11/Jun/2026 07:10:30 127.0.0.1 "POST /v1/chat/completions HTTP/1.1" 200 -

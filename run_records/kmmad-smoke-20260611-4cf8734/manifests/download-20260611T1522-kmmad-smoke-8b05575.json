@@ -1,0 +1,110 @@
+{
+  "created_at": "20260611T062126Z",
+  "status": "complete",
+  "method": "archive_urls",
+  "target": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad",
+  "source": {
+    "hf_dataset": "jiang-cc/MMAD",
+    "hf_url": "https://huggingface.co/datasets/jiang-cc/MMAD",
+    "github_url": "https://github.com/jam-cc/MMAD",
+    "arxiv_url": "https://arxiv.org/abs/2410.09453",
+    "expected_rows": 39672,
+    "expected_images": 8366,
+    "expected_total_size_gb": 28.4
+  },
+  "archive_files": [
+    "DS-MVTec.zip",
+    "GoodsAD.zip",
+    "MVTec-AD.zip",
+    "MVTec-LOCO.zip",
+    "VisA.zip",
+    "domain_knowledge.json",
+    "metadata.csv",
+    "mmad.json"
+  ],
+  "commands": [
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/DS-MVTec.zip",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/DS-MVTec.zip?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/GoodsAD.zip",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/GoodsAD.zip?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/MVTec-AD.zip",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/MVTec-AD.zip?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/MVTec-LOCO.zip",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/MVTec-LOCO.zip?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/VisA.zip",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/VisA.zip?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/domain_knowledge.json",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/domain_knowledge.json?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/metadata.csv",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/metadata.csv?download=true"
+    ],
+    [
+      "curl",
+      "-L",
+      "--fail",
+      "--continue-at",
+      "-",
+      "-o",
+      "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/mmad.json",
+      "https://huggingface.co/datasets/jiang-cc/MMAD/resolve/main/mmad.json?download=true"
+    ]
+  ],
+  "notes": [
+    "Downloads the current separate Hugging Face files; does not rely on the old ALL_DATA.zip path."
+  ]
+}

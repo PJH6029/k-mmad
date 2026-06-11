@@ -1,0 +1,161 @@
+{
+  "created_at": "20260611T065350Z",
+  "dataset_root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad",
+  "status": "passed",
+  "checks": {
+    "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/metadata.csv",
+    "row_count": 39672,
+    "expected_rows": 39672,
+    "expected_images": 8366,
+    "image_file_count_unpacked": 0,
+    "source_files": {
+      "expected_files": [
+        "DS-MVTec.zip",
+        "GoodsAD.zip",
+        "MVTec-AD.zip",
+        "MVTec-LOCO.zip",
+        "VisA.zip",
+        "domain_knowledge.json",
+        "metadata.csv",
+        "mmad.json"
+      ],
+      "present_expected_files": [
+        "DS-MVTec.zip",
+        "GoodsAD.zip",
+        "MVTec-AD.zip",
+        "MVTec-LOCO.zip",
+        "VisA.zip",
+        "domain_knowledge.json",
+        "metadata.csv",
+        "mmad.json"
+      ],
+      "missing_expected_files": [],
+      "expected_archives": [
+        "DS-MVTec.zip",
+        "GoodsAD.zip",
+        "MVTec-AD.zip",
+        "MVTec-LOCO.zip",
+        "VisA.zip"
+      ],
+      "present_expected_archives": [
+        "DS-MVTec.zip",
+        "GoodsAD.zip",
+        "MVTec-AD.zip",
+        "MVTec-LOCO.zip",
+        "VisA.zip"
+      ],
+      "missing_expected_archives": [],
+      "archives": [
+        {
+          "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/DS-MVTec.zip",
+          "size_bytes": 1663225174,
+          "valid_zip": true,
+          "members": 6257,
+          "image_members": 4145
+        },
+        {
+          "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/GoodsAD.zip",
+          "size_bytes": 13338776535,
+          "valid_zip": true,
+          "members": 13935,
+          "image_members": 7783
+        },
+        {
+          "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/MVTec-AD.zip",
+          "size_bytes": 5273925193,
+          "valid_zip": true,
+          "members": 12337,
+          "image_members": 6612
+        },
+        {
+          "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/MVTec-LOCO.zip",
+          "size_bytes": 6131998488,
+          "valid_zip": true,
+          "members": 9659,
+          "image_members": 4897
+        },
+        {
+          "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/VisA.zip",
+          "size_bytes": 1916719940,
+          "valid_zip": true,
+          "members": 22769,
+          "image_members": 12021
+        }
+      ]
+    },
+    "mmad_json": {
+      "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/mmad.json",
+      "exists": true,
+      "type": "image_keyed_mapping",
+      "image_count": 8366,
+      "conversation_rows": 39670,
+      "min_conversations_per_image": 2,
+      "max_conversations_per_image": 5
+    },
+    "field_report": {
+      "sample_size": 8,
+      "missing_in_sample": {
+        "question": 0,
+        "options": 0,
+        "caption": 8,
+        "answer": 0,
+        "path": 0
+      },
+      "text_fields": [
+        "options",
+        "question"
+      ],
+      "examples": [
+        {
+          "question_key": "question",
+          "options_key": "options",
+          "caption_key": null,
+          "answer_key": "answer",
+          "path_key": "query_image",
+          "question_preview": "There is a defect in the object. What is the appearance of the defect?",
+          "caption_preview": null
+        },
+        {
+          "question_key": "question",
+          "options_key": "options",
+          "caption_key": null,
+          "answer_key": "answer",
+          "path_key": "query_image",
+          "question_preview": "There is a defect in the object. What is the type of the defect?",
+          "caption_preview": null
+        },
+        {
+          "question_key": "question",
+          "options_key": "options",
+          "caption_key": null,
+          "answer_key": "answer",
+          "path_key": "query_image",
+          "question_preview": "There is a defect in the object. Where is the defect?",
+          "caption_preview": null
+        },
+        {
+          "question_key": "question",
+          "options_key": "options",
+          "caption_key": null,
+          "answer_key": "answer",
+          "path_key": "query_image",
+          "question_preview": "What kind of product is in the image?",
+          "caption_preview": null
+        },
+        {
+          "question_key": "question",
+          "options_key": "options",
+          "caption_key": null,
+          "answer_key": "answer",
+          "path_key": "query_image",
+          "question_preview": "There is a defect in the object. Where is the defect?",
+          "caption_preview": null
+        }
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": [
+    "caption field absent in sampled rows; translation smoke will report caption as unavailable/not translated"
+  ]
+}

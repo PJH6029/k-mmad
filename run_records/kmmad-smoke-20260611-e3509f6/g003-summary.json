@@ -1,0 +1,34 @@
+{
+  "created_at": "2026-06-11T16:11:00+09:00",
+  "git_sha": "e3509f6",
+  "g003_status": "passed",
+  "model": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+  "server_url": "http://127.0.0.1:8000/v1",
+  "output_dir": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/20260611T1611-e3509f6-bllossom-3b-sample3",
+  "validation": {
+    "status": "passed",
+    "rows": 3,
+    "errors": []
+  },
+  "untranslated": {
+    "created_at": "20260611T071030Z",
+    "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/metadata.csv",
+    "sample_size": 3,
+    "translated_scope": [
+      "question",
+      "options",
+      "caption"
+    ],
+    "untranslated_text_fields": {},
+    "missing_configured_translation_fields": {
+      "caption": 3
+    }
+  },
+  "manual_checks": {
+    "has_korean": true,
+    "has_cjk_chinese": false,
+    "has_assistant_artifact": false
+  },
+  "quality_note": "Smoke-only inspection: outputs are Korean-only for the sampled rows after glossary prompt, but terminology/semantic quality is not polished and still needs a future quality rubric before full translation.",
+  "candidate_adjustment_note": "Initial Qwen smoke produced Chinese/CJK text; EXAONE/Phi candidates had runtime incompatibilities in this ephemeral environment; Bllossom with stop-token handling produced the final smoke artifacts."
+}

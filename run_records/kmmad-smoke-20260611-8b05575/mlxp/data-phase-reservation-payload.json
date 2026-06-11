@@ -1,0 +1,15 @@
+{
+  "node_id": "1",
+  "gpu_start": 2,
+  "gpu_count": 1,
+  "gpu_indices": [],
+  "start_at": "2026-06-11T15:00:00+09:00",
+  "end_at": "2026-06-11T19:00:00+09:00",
+  "purpose": "SKT Dokpamo - MMAD Translation - G002 full MMAD data acquisition/sanity (GPU pod used only because MLXP PVC is pod-accessible; H200 inference gate remains blocked)",
+  "managed_image_key": "codex",
+  "registry_profile_key": "",
+  "image_path": "",
+  "command": [],
+  "args": [],
+  "actor_name": ""
+}

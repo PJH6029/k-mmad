@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-06-11T15:54:00+09:00",
+  "git_sha": "4cf8734",
+  "g002_status": "passed",
+  "dataset_path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad",
+  "download_manifest_cluster_path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/download-20260611T1522-kmmad-smoke-8b05575.json",
+  "sanity_report_cluster_path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/manifests/sanity-20260611T065350Z-kmmad-smoke-4cf8734.json",
+  "sanity_status": "passed",
+  "sanity_errors": [],
+  "sanity_warnings": [
+    "caption field absent in sampled rows; translation smoke will report caption as unavailable/not translated"
+  ],
+  "record_file": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/metadata.csv",
+  "row_count": 39672,
+  "expected_rows": 39672,
+  "mmad_json": {
+    "path": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/mmad/mmad.json",
+    "exists": true,
+    "type": "image_keyed_mapping",
+    "image_count": 8366,
+    "conversation_rows": 39670,
+    "min_conversations_per_image": 2,
+    "max_conversations_per_image": 5
+  },
+  "present_expected_files": [
+    "DS-MVTec.zip",
+    "GoodsAD.zip",
+    "MVTec-AD.zip",
+    "MVTec-LOCO.zip",
+    "VisA.zip",
+    "domain_knowledge.json",
+    "metadata.csv",
+    "mmad.json"
+  ],
+  "archive_count": 5,
+  "download_manifest_keys": [
+    "archive_files",
+    "commands",
+    "created_at",
+    "method",
+    "notes",
+    "source",
+    "status",
+    "target"
+  ],
+  "operational_exception": "A 1-GPU production pod was used for data access because the MLXP PVC path is pod-accessible; the H200 inference gate remained blocked until sanity passed."
+}
