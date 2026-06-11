@@ -1,4 +1,4 @@
-changed code/docs files: configs/kmmad_translation_smoke.toml docs/kmmad_translation_smoke_runbook.md scripts/kmmad_common.py scripts/kmmad_minimal_openai_server.py scripts/kmmad_sanity_check.py scripts/kmmad_translate_smoke.py 
+changed code/docs files: configs/kmmad_translation_smoke.toml docs/kmmad_translation_smoke_runbook.md scripts/kmmad_common.py scripts/kmmad_minimal_openai_server.py scripts/kmmad_sanity_check.py scripts/kmmad_translate_smoke.py
 --- fallback-like signal scan ---
 docs/kmmad_translation_smoke_runbook.md:17:uv run python scripts/kmmad_sanity_check.py --dataset tests/fixtures/mmad_sample --expected-rows 2 --allow-partial --report-out /tmp/kmmad_sanity_fixture.json
 scripts/kmmad_run_record.py:30:    except Exception:
