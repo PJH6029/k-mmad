@@ -46,7 +46,11 @@ def call_openai_compatible(config: dict[str, Any], text: str) -> str:
                 "content": (
                     "Translate the user's industrial anomaly-detection benchmark text into natural Korean only. "
                     "Return only the translated text, without notes or explanations. "
-                    "Preserve option letters, labels, numbers, and line breaks."
+                    "Preserve option letters, labels, numbers, and line breaks. "
+                    "Do not use Chinese/Hanja characters. "
+                    "Use this glossary when relevant: defect=결함, appearance=외관, speckles=반점, "
+                    "smudging=번짐, chip=깨짐, crack=균열, scratch=긁힘, deformation=변형, "
+                    "discoloration=변색, pill=알약, edge=가장자리, whiteboard eraser=화이트보드 지우개."
                 ),
             },
             {"role": "user", "content": text},
