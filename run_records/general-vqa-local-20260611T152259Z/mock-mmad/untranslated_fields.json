@@ -1,0 +1,15 @@
+{
+  "created_at": "20260611T152304Z",
+  "benchmark_id": null,
+  "record_file": "tests/fixtures/mmad_sample/mmad.json",
+  "sample_size": 2,
+  "translated_scope": [
+    "caption",
+    "options",
+    "question"
+  ],
+  "untranslated_text_fields": {
+    "domain_knowledge": 1
+  },
+  "missing_configured_translation_fields": {}
+}

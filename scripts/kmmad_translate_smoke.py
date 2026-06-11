@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run or validate a tiny Korean translation smoke over MMAD QA text + captions."""
+"""Run or validate tiny Korean translation smokes over MMAD or general VQA records."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ import os
 import re
 import urllib.error
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -28,6 +29,7 @@ from kmmad_common import (
     utc_now,
     write_json,
 )
+from kmmad_benchmarks import load_benchmark_sample, parse_benchmark_ids, registry_summary
 
 KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
@@ -39,7 +41,8 @@ def mock_translate(text: str) -> str:
 
 
 def normalized_auth_mode(inference: dict[str, Any]) -> str:
-    mode = str(inference.get("auth_mode", "none")).strip().lower().replace("-", "_")
+    default_mode = "none" if str(inference.get("endpoint_provider", "")).strip().lower().replace("-", "_") == "openai_oauth" else "none"
+    mode = str(inference.get("auth_mode", default_mode)).strip().lower().replace("-", "_")
     aliases = {
         "": "none",
         "no_auth": "none",
@@ -169,6 +172,60 @@ def build_translation_row(row: dict[str, Any], config: dict[str, Any], mock: boo
     return translated, untranslated, missing_scope
 
 
+
+def translate_text_mapping(values: dict[str, Any], config: dict[str, Any], mock: bool) -> dict[str, Any]:
+    return {key: translate_value(value, config, mock) for key, value in values.items()}
+
+
+def build_benchmark_translation_row(record: dict[str, Any], config: dict[str, Any], mock: bool) -> tuple[dict[str, Any], list[str], list[str]]:
+    text_fields = record.get("text_fields", {})
+    if not isinstance(text_fields, dict):
+        text_fields = {}
+    skip_fields = record.get("skip_fields", {})
+    preserve_fields = record.get("preserve_fields", {})
+    untranslated = sorted(str(key) for key in skip_fields) if isinstance(skip_fields, dict) else []
+    # Preserve text-like structural fields intentionally; report them so future
+    # full-translation work can revisit field policy deliberately.
+    if isinstance(preserve_fields, dict):
+        for key, value in preserve_fields.items():
+            if isinstance(value, str) and value.strip() and key not in untranslated:
+                untranslated.append(str(key))
+    translated_text_fields = translate_text_mapping(text_fields, config, mock)
+    row = {
+        "benchmark_id": record.get("benchmark_id"),
+        "benchmark_name": record.get("benchmark_name"),
+        "source_id": record.get("source_id"),
+        "split": record.get("split"),
+        "task": record.get("task"),
+        "media": record.get("media", []),
+        "source": record,
+        "translated": {"text_fields": translated_text_fields},
+        "translation_scope": list(text_fields),
+        "preserve_fields": preserve_fields,
+        "skip_fields": skip_fields,
+    }
+    missing_scope = [] if text_fields else ["text_fields"]
+    if missing_scope:
+        row["missing_translation_scope"] = missing_scope
+    return row, sorted(set(untranslated)), missing_scope
+
+
+def translate_rows_ordered(rows: list[dict[str, Any]], config: dict[str, Any], mock: bool, concurrency: int, *, benchmark_mode: bool) -> list[tuple[dict[str, Any], list[str], list[str]]]:
+    builder = build_benchmark_translation_row if benchmark_mode else build_translation_row
+    workers = max(1, int(concurrency))
+    if workers == 1 or len(rows) <= 1:
+        return [builder(row, config, mock) for row in rows]
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        return list(executor.map(lambda row: builder(row, config, mock), rows))
+
+
+def configured_concurrency(config: dict[str, Any], override: int | None = None) -> int:
+    if override is not None:
+        return max(1, override)
+    inference = config.get("inference", {})
+    smoke = config.get("smoke", {})
+    return max(1, int(inference.get("concurrency", smoke.get("concurrency", 1))))
+
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
     rows = []
     with path.open(encoding="utf-8") as fh:
@@ -197,6 +254,19 @@ def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[s
 
 
 def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
+    if output.is_dir():
+        benchmark_reports = []
+        errors: list[str] = []
+        for path in sorted(output.glob("*/translation_smoke.jsonl")):
+            sub_report = path.with_name("untranslated_fields.json")
+            result = validate_output(path, sub_report if sub_report.exists() else None)
+            result["path"] = str(path)
+            benchmark_reports.append(result)
+            errors.extend(f"{path}: {error}" for error in result.get("errors", []))
+        if not benchmark_reports:
+            errors.append(f"no benchmark translation outputs found under {output}")
+        return {"status": "passed" if not errors else "failed", "benchmarks": benchmark_reports, "errors": errors}
+
     rows = read_jsonl(output)
     errors: list[str] = []
     if not rows:
@@ -211,13 +281,78 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
             for required in ("question", "options"):
                 if required in missing_scope:
                     errors.append(f"row {idx} missing required translation scope: {required}")
+            if "text_fields" in missing_scope:
+                errors.append(f"row {idx} has no configured text fields to translate")
         for key, value in translated.items():
             validate_translated_value(idx, str(key), value, errors)
         if "source" not in row:
             errors.append(f"row {idx} missing source field")
+        if "benchmark_id" in row and not row.get("source_id"):
+            errors.append(f"row {idx} benchmark row missing source_id")
     if report is not None and not report.exists():
         errors.append(f"untranslated-field report missing: {report}")
     return {"status": "passed" if not errors else "failed", "rows": len(rows), "errors": errors}
+
+
+def write_translation_artifacts(
+    *,
+    rows: list[dict[str, Any]],
+    record_path: Path | None,
+    output_dir: Path,
+    config: dict[str, Any],
+    mock: bool,
+    concurrency: int,
+    benchmark_mode: bool,
+    benchmark_id: str | None = None,
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "translation_smoke.jsonl"
+    untranslated_report_path = output_dir / "untranslated_fields.json"
+    inspection_path = output_dir / "inspection_examples.json"
+
+    all_untranslated: dict[str, int] = {}
+    missing_configured: dict[str, int] = {}
+    translated_rows = translate_rows_ordered(rows, config, mock, concurrency, benchmark_mode=benchmark_mode)
+    with output_path.open("w", encoding="utf-8") as fh:
+        for translated, untranslated, missing_scope in translated_rows:
+            for field in untranslated:
+                all_untranslated[field] = all_untranslated.get(field, 0) + 1
+            for field in missing_scope:
+                missing_configured[field] = missing_configured.get(field, 0) + 1
+            fh.write(json.dumps(translated, ensure_ascii=False) + "\n")
+
+    translated_scope = sorted({scope for row, _, _ in translated_rows for scope in row.get("translation_scope", [])})
+    write_json(untranslated_report_path, {
+        "created_at": utc_now(),
+        "benchmark_id": benchmark_id,
+        "record_file": str(record_path) if record_path else None,
+        "sample_size": len(rows),
+        "translated_scope": translated_scope or ["question", "options", "caption"],
+        "untranslated_text_fields": all_untranslated,
+        "missing_configured_translation_fields": missing_configured,
+    })
+    output_rows = read_jsonl(output_path)
+    write_json(inspection_path, output_rows[: min(3, len(output_rows))])
+    result = validate_output(output_path, untranslated_report_path)
+    write_json(output_dir / "translation_validation.json", result)
+    summary = {
+        "created_at": utc_now(),
+        "benchmark_id": benchmark_id,
+        "record_file": str(record_path) if record_path else None,
+        "sample_size": len(rows),
+        "mock_sanity_only": mock,
+        "concurrency": concurrency,
+        "inference": sanitized_inference_summary(config),
+        "validation": result,
+        "artifacts": {
+            "translation_output": str(output_path),
+            "untranslated_field_report": str(untranslated_report_path),
+            "inspection_examples": str(inspection_path),
+            "validation_report": str(output_dir / "translation_validation.json"),
+        },
+    }
+    write_json(output_dir / "translation_smoke_summary.json", summary)
+    return summary
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -227,68 +362,82 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, default=None)
     parser.add_argument("--sample-size", type=int, default=None)
     parser.add_argument("--mock", action="store_true", help="Use deterministic local mock translations")
-    parser.add_argument("--validate-only", type=Path, default=None, help="Validate an existing JSONL output")
+    parser.add_argument("--validate-only", type=Path, default=None, help="Validate an existing JSONL output or multi-benchmark output directory")
     parser.add_argument("--untranslated-report", type=Path, default=None)
+    parser.add_argument("--benchmarks", default=None, help="Comma-separated benchmark IDs for general VQA mode")
+    parser.add_argument("--list-benchmarks", action="store_true", help="List registered general VQA benchmarks")
+    parser.add_argument("--concurrency", type=int, default=None, help="Bounded translation concurrency; output order remains deterministic")
     args = parser.parse_args(argv)
 
     config = load_config(args.config)
+    if args.list_benchmarks:
+        print(json.dumps(registry_summary(), ensure_ascii=False, indent=2))
+        return 0
     if args.validate_only:
         result = validate_output(args.validate_only, args.untranslated_report)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["status"] == "passed" else 1
 
-    dataset = args.dataset or configured_path(config, "original_subdir")
+    benchmark_ids = parse_benchmark_ids(args.benchmarks)
     sample_size = args.sample_size or int(config["smoke"].get("sample_size", 8))
+    concurrency = configured_concurrency(config, args.concurrency)
     output_dir = args.output_dir or configured_path(config, "translated_subdir") / utc_now()
+
+    if benchmark_ids:
+        dataset_root = args.dataset or configured_path(config, "general_vqa_original_subdir")
+        overall: dict[str, Any] = {
+            "created_at": utc_now(),
+            "mode": "general_vqa",
+            "benchmarks": benchmark_ids,
+            "sample_size": sample_size,
+            "mock_sanity_only": args.mock,
+            "concurrency": concurrency,
+            "results": {},
+            "registry": registry_summary(),
+        }
+        failed = False
+        for benchmark_id in benchmark_ids:
+            benchmark_root = dataset_root / benchmark_id if (dataset_root / benchmark_id).exists() else dataset_root
+            record_path, rows = load_benchmark_sample(benchmark_root, benchmark_id, sample_size, int(config["smoke"].get("sample_seed", 6029)))
+            if not rows:
+                overall["results"][benchmark_id] = {"status": "failed", "errors": [f"no parseable records found under {benchmark_root}"]}
+                failed = True
+                continue
+            summary = write_translation_artifacts(
+                rows=rows,
+                record_path=record_path,
+                output_dir=output_dir / benchmark_id,
+                config=config,
+                mock=args.mock,
+                concurrency=concurrency,
+                benchmark_mode=True,
+                benchmark_id=benchmark_id,
+            )
+            overall["results"][benchmark_id] = summary
+            failed = failed or summary["validation"]["status"] != "passed"
+        write_json(output_dir / "general_vqa_translation_summary.json", overall)
+        print(f"general VQA translation smoke output: {output_dir}")
+        return 1 if failed else 0
+
+    dataset = args.dataset or configured_path(config, "original_subdir")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     record_path, records = load_first_records(dataset)
     if not records:
         raise SystemExit(f"no parseable MMAD records found under {dataset}")
     sample = pick_sample(records, sample_size, int(config["smoke"].get("sample_seed", 6029)))
-    output_path = output_dir / "translation_smoke.jsonl"
-    untranslated_report_path = output_dir / "untranslated_fields.json"
-    inspection_path = output_dir / "inspection_examples.json"
-
-    all_untranslated: dict[str, int] = {}
-    missing_configured: dict[str, int] = {}
-    with output_path.open("w", encoding="utf-8") as fh:
-        for row in sample:
-            translated, untranslated, missing_scope = build_translation_row(row, config, args.mock)
-            for field in untranslated:
-                all_untranslated[field] = all_untranslated.get(field, 0) + 1
-            for field in missing_scope:
-                missing_configured[field] = missing_configured.get(field, 0) + 1
-            fh.write(json.dumps(translated, ensure_ascii=False) + "\n")
-
-    write_json(untranslated_report_path, {
-        "created_at": utc_now(),
-        "record_file": str(record_path),
-        "sample_size": len(sample),
-        "translated_scope": ["question", "options", "caption"],
-        "untranslated_text_fields": all_untranslated,
-        "missing_configured_translation_fields": missing_configured,
-    })
-    rows = read_jsonl(output_path)
-    write_json(inspection_path, rows[: min(3, len(rows))])
-    result = validate_output(output_path, untranslated_report_path)
-    write_json(output_dir / "translation_validation.json", result)
-    write_json(output_dir / "translation_smoke_summary.json", {
-        "created_at": utc_now(),
-        "record_file": str(record_path),
-        "sample_size": len(sample),
-        "inference": sanitized_inference_summary(config),
-        "validation": result,
-        "artifacts": {
-            "translation_output": str(output_path),
-            "untranslated_field_report": str(untranslated_report_path),
-            "inspection_examples": str(inspection_path),
-            "validation_report": str(output_dir / "translation_validation.json"),
-        },
-    })
-    print(f"translation smoke output: {output_path}")
-    print(f"untranslated-field report: {untranslated_report_path}")
-    return 0 if result["status"] == "passed" else 1
+    summary = write_translation_artifacts(
+        rows=sample,
+        record_path=record_path,
+        output_dir=output_dir,
+        config=config,
+        mock=args.mock,
+        concurrency=concurrency,
+        benchmark_mode=False,
+    )
+    print(f"translation smoke output: {summary['artifacts']['translation_output']}")
+    print(f"untranslated-field report: {summary['artifacts']['untranslated_field_report']}")
+    return 0 if summary["validation"]["status"] == "passed" else 1
 
 
 if __name__ == "__main__":

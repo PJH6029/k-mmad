@@ -1,0 +1,12 @@
+[
+  {
+    "uid": "blink-001",
+    "split": "val",
+    "task": "Relative_Depth",
+    "images": ["images/blink-001-a.jpg", "images/blink-001-b.jpg"],
+    "visual_prompt": "Compare the marked objects in the two panels.",
+    "question": "Which object is closer to the camera?",
+    "choices": {"A": "The red cube", "B": "The blue sphere", "C": "They are at the same depth", "D": "Cannot be determined"},
+    "answer": "A"
+  }
+]

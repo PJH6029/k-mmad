@@ -1,0 +1,158 @@
+from __future__ import annotations
+
+import json
+import sys
+import threading
+import time
+import unittest
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from kmmad_benchmarks import BENCHMARKS, load_benchmark_sample, normalize_benchmark_id, parse_benchmark_ids  # noqa: E402
+from kmmad_translate_smoke import (  # noqa: E402
+    build_request_headers,
+    configured_concurrency,
+    translate_rows_ordered,
+)
+
+FIXTURE_ROOT = ROOT / "tests" / "fixtures" / "general_vqa"
+
+
+class DelayedOpenAIHandler(BaseHTTPRequestHandler):
+    seen: list[str] = []
+
+    def log_message(self, format: str, *args: Any) -> None:
+        return
+
+    def do_POST(self) -> None:  # noqa: N802
+        length = int(self.headers.get("Content-Length", "0"))
+        body = json.loads(self.rfile.read(length).decode("utf-8"))
+        text = body["messages"][-1]["content"]
+        idx = int(text.rsplit(" ", 1)[-1])
+        # Higher indexes return first, so completion order differs from input order.
+        time.sleep(0.01 * (5 - idx))
+        self.__class__.seen.append(text)
+        response = {
+            "choices": [
+                {
+                    "message": {"content": f"한국어 지연 응답 {idx}"},
+                    "finish_reason": "stop",
+                    "index": 0,
+                }
+            ]
+        }
+        payload = json.dumps(response, ensure_ascii=False).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+
+class GeneralVqaAdapterTest(unittest.TestCase):
+    def test_registry_contains_exact_first_pass_benchmarks(self) -> None:
+        self.assertEqual(set(BENCHMARKS), {"mme_realworld", "blink", "mmmu_pro", "mega_bench"})
+        self.assertEqual(parse_benchmark_ids("MME-RealWorld,blink,mmmu-pro,mega-bench"), ["mme_realworld", "blink", "mmmu_pro", "mega_bench"])
+        with self.assertRaises(KeyError):
+            normalize_benchmark_id("mmstar")
+
+    def test_all_fixture_adapters_emit_common_schema(self) -> None:
+        for benchmark_id in BENCHMARKS:
+            with self.subTest(benchmark_id=benchmark_id):
+                record_path, records = load_benchmark_sample(FIXTURE_ROOT / benchmark_id, benchmark_id, sample_size=2, seed=1)
+                self.assertIsNotNone(record_path)
+                self.assertEqual(len(records), 1)
+                row = records[0]
+                self.assertEqual(row["benchmark_id"], benchmark_id)
+                self.assertTrue(row["source_id"])
+                self.assertIn("text_fields", row)
+                self.assertTrue(row["text_fields"])
+                self.assertIn("preserve_fields", row)
+                self.assertIn("media", row)
+                self.assertIn("translation_scope", row)
+                self.assertNotIn("answer", row["text_fields"])
+                self.assertTrue(any(key.lower() in {"answer", "target"} for key in row["preserve_fields"]))
+                if benchmark_id == "mega_bench":
+                    self.assertIn("output_format", row["preserve_fields"])
+                    self.assertIn("rubric", row["skip_fields"])
+                if benchmark_id == "mmmu_pro":
+                    self.assertIn("ocr_text", row["skip_fields"])
+
+    def test_parallel_translation_preserves_input_order(self) -> None:
+        rows = [
+            {
+                "benchmark_id": "blink",
+                "benchmark_name": "BLINK",
+                "source_id": f"row-{idx}",
+                "text_fields": {"question": f"question {idx}"},
+                "preserve_fields": {"answer": "A"},
+                "skip_fields": {},
+                "media": [],
+                "translation_scope": ["question"],
+            }
+            for idx in range(5)
+        ]
+        config: dict[str, Any] = {"inference": {"concurrency": 4}}
+        translated = translate_rows_ordered(rows, config, mock=True, concurrency=4, benchmark_mode=True)
+        self.assertEqual([item[0]["source_id"] for item in translated], [f"row-{idx}" for idx in range(5)])
+        self.assertEqual(configured_concurrency({"smoke": {"concurrency": 3}, "inference": {}}, None), 3)
+
+    def test_parallel_endpoint_responses_merge_in_input_order(self) -> None:
+        DelayedOpenAIHandler.seen = []
+        server = ThreadingHTTPServer(("127.0.0.1", 0), DelayedOpenAIHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        self.addCleanup(server.server_close)
+        self.addCleanup(thread.join, 2)
+        self.addCleanup(server.shutdown)
+        rows = [
+            {
+                "benchmark_id": "blink",
+                "benchmark_name": "BLINK",
+                "source_id": f"row-{idx}",
+                "text_fields": {"question": f"question {idx}"},
+                "preserve_fields": {"answer": "A"},
+                "skip_fields": {},
+                "media": [],
+                "translation_scope": ["question"],
+            }
+            for idx in range(5)
+        ]
+        config: dict[str, Any] = {
+            "inference": {
+                "endpoint_provider": "contract",
+                "auth_mode": "none",
+                "openai_compatible_base_url": f"http://127.0.0.1:{server.server_port}/v1",
+                "model": "delayed-test",
+                "timeout_seconds": 5,
+                "max_tokens": 32,
+                "temperature": 0.0,
+            }
+        }
+
+        translated = translate_rows_ordered(rows, config, mock=False, concurrency=5, benchmark_mode=True)
+
+        self.assertEqual([item[0]["source_id"] for item in translated], [f"row-{idx}" for idx in range(5)])
+        self.assertEqual(
+            [item[0]["translated"]["text_fields"]["question"] for item in translated],
+            [f"한국어 지연 응답 {idx}" for idx in range(5)],
+        )
+        self.assertNotEqual(DelayedOpenAIHandler.seen, [f"question {idx}" for idx in range(5)])
+
+
+class OpenAiOauthAliasContractTest(unittest.TestCase):
+    def test_endpoint_provider_openai_oauth_defaults_to_no_authorization(self) -> None:
+        config = {"inference": {"endpoint_provider": "openai_oauth", "openai_compatible_base_url": "http://127.0.0.1:10531/v1", "model": "test"}}
+        self.assertNotIn("Authorization", build_request_headers(config))
+
+    def test_auth_mode_openai_oauth_alias_is_no_authorization(self) -> None:
+        config = {"inference": {"endpoint_provider": "contract", "auth_mode": "openai_oauth", "openai_compatible_base_url": "http://127.0.0.1:10531/v1", "model": "test"}}
+        self.assertNotIn("Authorization", build_request_headers(config))
+
+
+if __name__ == "__main__":
+    unittest.main()

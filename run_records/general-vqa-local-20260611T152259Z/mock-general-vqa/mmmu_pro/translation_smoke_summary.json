@@ -1,0 +1,26 @@
+{
+  "created_at": "20260611T152304Z",
+  "benchmark_id": "mmmu_pro",
+  "record_file": "tests/fixtures/general_vqa/mmmu_pro/mmmu_pro.json",
+  "sample_size": 1,
+  "mock_sanity_only": true,
+  "concurrency": 4,
+  "inference": {
+    "endpoint_provider": "local_openai_compatible",
+    "base_url": "http://127.0.0.1:8000/v1",
+    "model": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+    "auth_mode": "none",
+    "api_key_env": "OPENAI_API_KEY"
+  },
+  "validation": {
+    "status": "passed",
+    "rows": 1,
+    "errors": []
+  },
+  "artifacts": {
+    "translation_output": "/tmp/kmmad_verify_general_vqa/mmmu_pro/translation_smoke.jsonl",
+    "untranslated_field_report": "/tmp/kmmad_verify_general_vqa/mmmu_pro/untranslated_fields.json",
+    "inspection_examples": "/tmp/kmmad_verify_general_vqa/mmmu_pro/inspection_examples.json",
+    "validation_report": "/tmp/kmmad_verify_general_vqa/mmmu_pro/translation_validation.json"
+  }
+}

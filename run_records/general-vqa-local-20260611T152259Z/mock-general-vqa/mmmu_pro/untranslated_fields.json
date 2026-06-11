@@ -1,0 +1,20 @@
+{
+  "created_at": "20260611T152304Z",
+  "benchmark_id": "mmmu_pro",
+  "record_file": "tests/fixtures/general_vqa/mmmu_pro/mmmu_pro.json",
+  "sample_size": 1,
+  "translated_scope": [
+    "instruction",
+    "options",
+    "question"
+  ],
+  "untranslated_text_fields": {
+    "answer": 1,
+    "discipline": 1,
+    "ocr_text": 1,
+    "question_id": 1,
+    "split": 1,
+    "subject": 1
+  },
+  "missing_configured_translation_fields": {}
+}

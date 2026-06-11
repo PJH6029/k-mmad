@@ -1,6 +1,7 @@
 [paths]
 dataset_root = "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data"
 original_subdir = "original/mmad"
+general_vqa_original_subdir = "original/general-vqa"
 manifest_subdir = "original/manifests"
 translated_subdir = "translated/smoke"
 run_subdir = "runs"
@@ -28,6 +29,7 @@ archive_files = [
 [smoke]
 sample_size = 8
 sample_seed = 6029
+concurrency = 1
 translate_fields = ["question", "options", "caption"]
 preserve_fields = ["answer", "image", "image_path", "id", "metadata", "category", "dataset", "split"]
 report_untranslated_text_fields = true
@@ -57,3 +59,15 @@ h200_gate = "Do not reserve 1x H200 until full-data manifest and sanity-check re
 # This pass contract-tests the API-key mode only; no paid live OpenAI call.
 [inference.endpoint_auth]
 redact_headers = ["Authorization"]
+
+[general_vqa]
+benchmarks = ["mme_realworld", "blink", "mmmu_pro", "mega_bench"]
+fixture_root = "tests/fixtures/general_vqa"
+first_pass_full_download_required = false
+mock_is_completion_evidence = false
+requires_local_gpu_llm_evidence = true
+requires_openai_oauth_evidence = true
+
+[general_vqa.parallelism]
+default_concurrency = 2
+deterministic_order = true

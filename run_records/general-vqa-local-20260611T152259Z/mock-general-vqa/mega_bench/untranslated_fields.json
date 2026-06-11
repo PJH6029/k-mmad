@@ -1,0 +1,21 @@
+{
+  "created_at": "20260611T152304Z",
+  "benchmark_id": "mega_bench",
+  "record_file": "tests/fixtures/general_vqa/mega_bench/mega_bench.json",
+  "sample_size": 1,
+  "translated_scope": [
+    "instruction",
+    "question"
+  ],
+  "untranslated_text_fields": {
+    "application": 1,
+    "metric": 1,
+    "output_format": 1,
+    "rubric": 1,
+    "sample_id": 1,
+    "split": 1,
+    "target": 1,
+    "task_name": 1
+  },
+  "missing_configured_translation_fields": {}
+}

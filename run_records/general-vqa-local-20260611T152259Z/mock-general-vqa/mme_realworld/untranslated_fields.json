@@ -1,0 +1,19 @@
+{
+  "created_at": "20260611T152304Z",
+  "benchmark_id": "mme_realworld",
+  "record_file": "tests/fixtures/general_vqa/mme_realworld/mme_realworld.json",
+  "sample_size": 1,
+  "translated_scope": [
+    "options",
+    "question"
+  ],
+  "untranslated_text_fields": {
+    "answer": 1,
+    "difficulty": 1,
+    "id": 1,
+    "scenario": 1,
+    "split": 1,
+    "subtask": 1
+  },
+  "missing_configured_translation_fields": {}
+}

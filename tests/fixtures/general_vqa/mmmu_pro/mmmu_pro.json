@@ -1,0 +1,14 @@
+[
+  {
+    "question_id": "mmmu-pro-001",
+    "split": "validation",
+    "subject": "Physics",
+    "discipline": "Science",
+    "image": "images/mmmu-pro-001.png",
+    "instruction": "Answer the multiple-choice problem using the diagram.",
+    "question": "In the circuit shown, what happens to the current if the resistance doubles?",
+    "options": ["A. It doubles", "B. It is halved", "C. It stays the same", "D. It becomes zero"],
+    "answer": "B",
+    "ocr_text": "V = IR"
+  }
+]

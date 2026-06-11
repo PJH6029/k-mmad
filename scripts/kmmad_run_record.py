@@ -42,6 +42,13 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
         "dataset": {
             "root": config["paths"]["dataset_root"],
             "source": config["source"],
+            "general_vqa": {
+                "benchmarks": config.get("general_vqa", {}).get("benchmarks", []),
+                "first_pass_full_download_required": config.get("general_vqa", {}).get("first_pass_full_download_required", False),
+                "mock_is_completion_evidence": config.get("general_vqa", {}).get("mock_is_completion_evidence", False),
+                "requires_local_gpu_llm_evidence": config.get("general_vqa", {}).get("requires_local_gpu_llm_evidence", True),
+                "requires_openai_oauth_evidence": config.get("general_vqa", {}).get("requires_openai_oauth_evidence", True),
+            },
             "download_manifest": None,
             "sanity_report": None,
         },
@@ -60,6 +67,12 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
             "managed_image_key": None,
             "command": None,
             "health_check": None,
+        },
+        "translation": {
+            "mode": "mmad_or_general_vqa",
+            "benchmarks": config.get("general_vqa", {}).get("benchmarks", []),
+            "mock_sanity_only": config.get("general_vqa", {}).get("mock_is_completion_evidence", False) is False,
+            "parallelism": config.get("general_vqa", {}).get("parallelism", {}),
         },
         "model": {
             "identifier": config["inference"]["model"],

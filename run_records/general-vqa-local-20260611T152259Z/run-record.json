@@ -1,0 +1,97 @@
+{
+  "run_id": "kmmad-smoke-20260611T152304Z-72a6ea9a",
+  "created_at": "20260611T152304Z",
+  "status": "initialized",
+  "git_sha": "72a6ea9a4cce0c706ebaeff4bdfb6345e2368b1f",
+  "cluster_git_sha": null,
+  "commands": [],
+  "dataset": {
+    "root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data",
+    "source": {
+      "hf_dataset": "jiang-cc/MMAD",
+      "hf_url": "https://huggingface.co/datasets/jiang-cc/MMAD",
+      "github_url": "https://github.com/jam-cc/MMAD",
+      "arxiv_url": "https://arxiv.org/abs/2410.09453",
+      "expected_rows": 39672,
+      "expected_images": 8366,
+      "expected_total_size_gb": 28.4,
+      "preferred_methods": [
+        "git_lfs_clone",
+        "huggingface_cli_download",
+        "archive_urls"
+      ],
+      "archive_files": [
+        "DS-MVTec.zip",
+        "GoodsAD.zip",
+        "MVTec-AD.zip",
+        "MVTec-LOCO.zip",
+        "VisA.zip",
+        "domain_knowledge.json",
+        "metadata.csv",
+        "mmad.json"
+      ]
+    },
+    "general_vqa": {
+      "benchmarks": [
+        "mme_realworld",
+        "blink",
+        "mmmu_pro",
+        "mega_bench"
+      ],
+      "first_pass_full_download_required": false,
+      "mock_is_completion_evidence": false,
+      "requires_local_gpu_llm_evidence": true,
+      "requires_openai_oauth_evidence": true
+    },
+    "download_manifest": null,
+    "sanity_report": null
+  },
+  "reservation": {
+    "project": "production",
+    "member": "jeonghunpark",
+    "purpose_prefix": "SKT Dokpamo - MMAD Translation",
+    "payload": null,
+    "id": null,
+    "cancelled_at": null,
+    "active_reason": null
+  },
+  "image_runtime": {
+    "image_path": null,
+    "image_digest": null,
+    "managed_image_key": null,
+    "command": null,
+    "health_check": null
+  },
+  "translation": {
+    "mode": "mmad_or_general_vqa",
+    "benchmarks": [
+      "mme_realworld",
+      "blink",
+      "mmmu_pro",
+      "mega_bench"
+    ],
+    "mock_sanity_only": true,
+    "parallelism": {
+      "default_concurrency": 2,
+      "deterministic_order": true
+    }
+  },
+  "model": {
+    "identifier": "Bllossom/llama-3.2-Korean-Bllossom-3B",
+    "revision": null,
+    "endpoint": "http://127.0.0.1:8000/v1",
+    "endpoint_provider": "local_openai_compatible",
+    "auth_mode": "none",
+    "api_key_env": "OPENAI_API_KEY",
+    "auth_secret_present": null
+  },
+  "artifacts": {
+    "translation_output": null,
+    "untranslated_field_report": null,
+    "validation_report": null,
+    "inspection_examples": null,
+    "logs": []
+  },
+  "failures_retries": [],
+  "notes": []
+}

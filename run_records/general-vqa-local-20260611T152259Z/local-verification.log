@@ -1,0 +1,70 @@
+## unittest
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 3.521s
+
+OK
+## compileall
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/general_vqa'...
+Listing 'tests/fixtures/general_vqa/blink'...
+Listing 'tests/fixtures/general_vqa/mega_bench'...
+Listing 'tests/fixtures/general_vqa/mme_realworld'...
+Listing 'tests/fixtures/general_vqa/mmmu_pro'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
+## ruff
+All checks passed!
+## pyright
+0 errors, 0 warnings, 0 informations
+## MMAD mock smoke
+translation smoke output: /tmp/kmmad_verify_mmad/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_verify_mmad/untranslated_fields.json
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
+## General VQA mock smoke
+general VQA translation smoke output: /tmp/kmmad_verify_general_vqa
+{
+  "status": "passed",
+  "benchmarks": [
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/tmp/kmmad_verify_general_vqa/blink/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/tmp/kmmad_verify_general_vqa/mega_bench/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/tmp/kmmad_verify_general_vqa/mme_realworld/translation_smoke.jsonl"
+    },
+    {
+      "status": "passed",
+      "rows": 1,
+      "errors": [],
+      "path": "/tmp/kmmad_verify_general_vqa/mmmu_pro/translation_smoke.jsonl"
+    }
+  ],
+  "errors": []
+}
+## Run record validate
+run record initialized: /tmp/kmmad_verify_run_record.json
+{
+  "status": "passed",
+  "errors": []
+}
+## git diff check
+## secret scan
+secret scan passed

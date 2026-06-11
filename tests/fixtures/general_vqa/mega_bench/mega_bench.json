@@ -1,0 +1,15 @@
+[
+  {
+    "sample_id": "mega-001",
+    "split": "core",
+    "task_name": "chart_understanding",
+    "application": "Data analysis",
+    "images": ["images/mega-001.png"],
+    "instruction": "Inspect the chart and answer with one short phrase.",
+    "task_prompt": "Which product category has the largest increase from 2020 to 2021?",
+    "target": "electronics",
+    "output_format": "short phrase",
+    "metric": "exact_match",
+    "rubric": "The answer must name exactly one category."
+  }
+]

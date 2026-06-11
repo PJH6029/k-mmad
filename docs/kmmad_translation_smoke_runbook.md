@@ -116,3 +116,95 @@ uv run python scripts/kmmad_translate_smoke.py --validate-only /mnt/ddn/prod-run
 ```
 
 After the run, copy actual translated sample artifacts locally under ignored `outputs/`, verify SHA256 checksums against the remote files, and run secret-grep over all copied artifacts/logs/run records.
+
+## General VQA multi-benchmark smoke
+
+This section covers the first-pass general VQA extension for exactly these benchmarks:
+
+- MME-RealWorld
+- BLINK
+- MMMU-Pro
+- MEGA-Bench
+
+### Scope boundary
+
+The MMAD full-download and H200 gate above applies to the original MMAD smoke only. It is **not** the completion gate for this General VQA first pass.
+
+General VQA first-pass success is sample/smoke based:
+
+- no full benchmark translation;
+- no benchmark evaluation, leaderboard submission, or model comparison;
+- no adapter implementation beyond the four selected benchmarks;
+- no destructive dataset operations;
+- no paid/live real OpenAI API-key call;
+- no requirement to fully download all four benchmarks before declaring the adapter/sample smoke complete.
+
+Mock output is sanity-only. Completion evidence must include both actual local GPU LLM translation samples and actual `openai-oauth` endpoint translation samples.
+
+### Local checks
+
+```bash
+uv run python scripts/kmmad_translate_smoke.py --list-benchmarks
+uv run python scripts/kmmad_translate_smoke.py \
+  --dataset tests/fixtures/general_vqa \
+  --benchmarks mme_realworld,blink,mmmu_pro,mega_bench \
+  --output-dir /tmp/kmmad_general_vqa_mock \
+  --sample-size 1 \
+  --mock \
+  --concurrency 2
+uv run python scripts/kmmad_translate_smoke.py --validate-only /tmp/kmmad_general_vqa_mock
+uv run python -m unittest tests/test_general_vqa_adapters.py
+```
+
+### Artifact layout
+
+Preferred durable cluster layout:
+
+```text
+/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/
+  original/general-vqa/<benchmark>/...
+  translated/smoke/general-vqa/<run-id>/<benchmark>/
+    translation_smoke.jsonl
+    untranslated_fields.json
+    translation_validation.json
+    inspection_examples.json
+    translation_smoke_summary.json
+  runs/general-vqa/<run-id>/run_record.json
+```
+
+Local copies of actual translated sample artifacts must be downloaded under ignored `outputs/`, with sanitized run evidence under `run_records/` when appropriate. Verify remote/local SHA256 checksums and run secret scans before reporting completion.
+
+### Local GPU LLM evidence path
+
+1. Run local adapter/mock/API-contract checks first.
+2. Commit and push the verified code.
+3. Reserve the smallest appropriate production MLXP GPU pod, usually 1x H200 for this smoke.
+4. In the cluster clone, pull the recorded git SHA.
+5. Start the selected local OpenAI-compatible LLM endpoint or approved local inference shim.
+6. Translate 1-3 sample records per selected benchmark.
+7. Validate outputs, preserve run evidence, copy artifacts locally, and cancel the reservation promptly.
+
+### openai-oauth endpoint evidence path
+
+Use image `ghcr.io/pjh6029/snupi-personal-codex:20260414` and `CODEX_HOME=/root/work/.codex` when Codex auth is required.
+
+```bash
+export CODEX_HOME=/root/work/.codex
+npx -y openai-oauth --host 127.0.0.1 --port 10531 > /tmp/kmmad-general-vqa-openai-oauth.log 2>&1 &
+curl -sS http://127.0.0.1:10531/v1/models > /tmp/kmmad-general-vqa-models.json
+uv run python scripts/kmmad_translate_smoke.py \
+  --dataset /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/original/general-vqa \
+  --benchmarks mme_realworld,blink,mmmu_pro,mega_bench \
+  --output-dir /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/general-vqa/<run-id> \
+  --sample-size 1 \
+  --concurrency 2
+```
+
+Bind `openai-oauth` only to `127.0.0.1`; do not expose a public proxy. Real OpenAI API-key mode remains contract-tested only in this pass: no paid/live OpenAI API call is allowed without a later explicit task.
+
+### Provider/auth regression expectations
+
+- `endpoint_provider = "openai_oauth"` must use no Authorization header by default.
+- `auth_mode = "openai_oauth"` legacy alias, if accepted, must normalize to no-auth behavior.
+- `auth_mode = "bearer_env"` must send `Authorization: Bearer $OPENAI_API_KEY` only to a fake/local contract endpoint in this pass.
+- Persist env var names, not secret values.
