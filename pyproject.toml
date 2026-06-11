@@ -1,0 +1,16 @@
+[project]
+name = "k-mmad"
+version = "0.1.0"
+description = "K-MMAD tooling for Korean translation smoke checks over MMAD"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "sample-001",
+    "dataset": "fixture",
+    "image_path": "images/sample-001.png",
+    "question": "What type of defect is visible on the metal surface?",
+    "options": ["A. scratch", "B. dent", "C. contamination", "D. no defect"],
+    "answer": "A",
+    "caption": "A close-up industrial inspection image showing a thin scratch on a metal surface.",
+    "domain_knowledge": "Metal surfaces should be smooth and free of scratches."
+  },
+  {
+    "id": "sample-002",
+    "dataset": "fixture",
+    "image_path": "images/sample-002.png",
+    "question": "Is this product normal or anomalous?",
+    "options": {"A": "normal", "B": "anomalous"},
+    "answer": "B",
+    "caption": "A product image with a dark stain near the edge.",
+    "class_name": "capsule"
+  }
+]
