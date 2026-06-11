@@ -107,6 +107,8 @@ def call_openai_compatible(config: dict[str, Any], text: str) -> str:
                     "Return only the translated text, without notes or explanations. "
                     "Preserve option letters, labels, numbers, and line breaks. "
                     "Do not use Chinese/Hanja characters. "
+                    "If an English phrase tempts a Chinese wording, choose Hangul-only Korean instead "
+                    "(for example, translate 'one short phrase' as '짧은 문구'). "
                     "Use this glossary only when relevant: defect=결함, appearance=외관, speckles=반점, "
                     "smudging=번짐, chip=깨짐, crack=균열, scratch=긁힘, deformation=변형, "
                     "discoloration=변색, pill=알약, edge=가장자리, whiteboard eraser=화이트보드 지우개."
