@@ -41,7 +41,14 @@ def call_openai_compatible(config: dict[str, Any], text: str) -> str:
         "temperature": inference.get("temperature", 0.0),
         "max_tokens": inference.get("max_tokens", 1024),
         "messages": [
-            {"role": "system", "content": "Translate the user's industrial anomaly-detection benchmark text into natural Korean. Preserve labels, numbers, and option letters."},
+            {
+                "role": "system",
+                "content": (
+                    "Translate the user's industrial anomaly-detection benchmark text into natural Korean only. "
+                    "Return only the translated text, without notes or explanations. "
+                    "Preserve option letters, labels, numbers, and line breaks."
+                ),
+            },
             {"role": "user", "content": text},
         ],
     }
