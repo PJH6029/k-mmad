@@ -23,11 +23,27 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 
 # Conservative redaction helpers for command/log/run-record boundaries.
 # Keep env var names visible, but never persist bearer values, OpenAI-style keys,
-# or OAuth-ish token JSON values.
+# or OAuth-/controller-token JSON values.
+SECRET_FIELD_NAMES = frozenset(
+    {
+        "access_token",
+        "api_key",
+        "client_secret",
+        "id_token",
+        "jupyter_token",
+        "oauth_token",
+        "password",
+        "passwd",
+        "pwd",
+        "refresh_token",
+        "secret",
+        "token",
+    }
+)
 AUTH_BEARER_RE = re.compile(r"(Authorization\s*[:=]\s*Bearer\s+)(?!<redacted>|\$[A-Za-z_][A-Za-z0-9_]*)([^\s\"']+)", re.IGNORECASE)
 OPENAI_KEY_RE = re.compile(r"\bsk-[A-Za-z0-9_-]{10,}\b")
 TOKEN_FIELD_RE = re.compile(
-    r"(\b(?:access_token|refresh_token|id_token|api_key|oauth_token)\b\s*[=:]\s*)(?!<redacted>|\$[A-Za-z_][A-Za-z0-9_]*)([^\s,;\"']+)",
+    r"([\"']?\b(?:(?:[A-Za-z0-9]+_)*token|access_token|api_key|client_secret|id_token|jupyter_token|oauth_token|password|passwd|pwd|refresh_token|secret)\b[\"']?\s*[=:]\s*[\"']?)(?!<redacted>|\$[A-Za-z_][A-Za-z0-9_]*)([^\s,;\"'}]+)",
     re.IGNORECASE,
 )
 
@@ -80,13 +96,24 @@ def sanitize_text(text: str, extra_secrets: Iterable[str] | None = None) -> str:
     return sanitized
 
 
+def is_secret_field_name(key: Any) -> bool:
+    name = str(key).lower()
+    return name in SECRET_FIELD_NAMES or name.endswith("_token")
+
+
 def sanitize_jsonable(value: Any, extra_secrets: Iterable[str] | None = None) -> Any:
     if isinstance(value, str):
         return sanitize_text(value, extra_secrets)
     if isinstance(value, list):
         return [sanitize_jsonable(item, extra_secrets) for item in value]
     if isinstance(value, dict):
-        return {key: sanitize_jsonable(item, extra_secrets) for key, item in value.items()}
+        sanitized: dict[Any, Any] = {}
+        for key, item in value.items():
+            if is_secret_field_name(key) and item:
+                sanitized[key] = "<redacted>"
+            else:
+                sanitized[key] = sanitize_jsonable(item, extra_secrets)
+        return sanitized
     return value
 
 
@@ -103,7 +130,11 @@ def find_sensitive_strings(value: Any, *, path: str = "$", extra_secrets: Iterab
         return findings
     if isinstance(value, dict):
         for key, item in value.items():
-            findings.extend(find_sensitive_strings(item, path=f"{path}.{key}", extra_secrets=extra_secrets))
+            item_path = f"{path}.{key}"
+            if is_secret_field_name(key) and item not in (None, "", "<redacted>"):
+                findings.append(item_path)
+                continue
+            findings.extend(find_sensitive_strings(item, path=item_path, extra_secrets=extra_secrets))
     return findings
 
 

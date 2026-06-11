@@ -1,0 +1,42 @@
+### verification after MLXP token redaction fix
+2026-06-11T14:00:06Z
++ uv run python -m unittest discover -s tests
+......
+----------------------------------------------------------------------
+Ran 6 tests in 3.016s
+
+OK
++ uvx ruff check changed files
+All checks passed!
++ PYTHONPATH=scripts uvx pyright scripts tests
+0 errors, 0 warnings, 0 informations
++ mock translation smoke
+translation smoke output: /tmp/kmmad_endpoint_translate_fixture/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_endpoint_translate_fixture/untranslated_fields.json
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
++ copied endpoint translation validation
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
++ endpoint run-record validation
+{
+  "status": "passed",
+  "errors": []
+}
++ compileall
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
++ git diff --check
++ persisted-evidence secret scan with intentional test/source pattern allowlist
+persisted evidence secret scan passed; sanitizer/test source token names are covered by unit tests
++ translation cluster/local checksum match
+cluster/local translation checksums passed

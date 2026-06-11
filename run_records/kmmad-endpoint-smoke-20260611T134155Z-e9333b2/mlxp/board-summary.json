@@ -1,0 +1,23 @@
+{
+  "project_id": "production",
+  "namespace": "p-production",
+  "slot_minutes": 60,
+  "window_start": "2026-06-11T22:00:00+09:00",
+  "window_end": "2026-06-12T22:00:00+09:00",
+  "managed_images": [
+    {
+      "key": "codex",
+      "label": "Codex",
+      "image": "ghcr.io/pjh6029/snupi-personal-codex:20260414",
+      "description": "Codex-enabled image that inherits from the production base image."
+    }
+  ],
+  "selected_reservation_window": {
+    "node_id": "1",
+    "gpu_start": 2,
+    "gpu_count": 1,
+    "start_at": "2026-06-11T22:00:00+09:00",
+    "end_at": "2026-06-11T23:00:00+09:00"
+  },
+  "privacy_note": "Full board response intentionally not retained; summary keeps only selected slot and managed Codex image evidence."
+}

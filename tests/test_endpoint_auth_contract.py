@@ -12,7 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from kmmad_common import find_sensitive_strings, sanitize_jsonable  # noqa: E402
+from kmmad_common import find_sensitive_strings, sanitize_jsonable, sanitize_text  # noqa: E402
 from kmmad_run_record import validate as validate_run_record  # noqa: E402
 from kmmad_translate_smoke import (  # noqa: E402
     build_request_headers,
@@ -143,6 +143,54 @@ class EndpointAuthContractTest(unittest.TestCase):
         joined = "\n".join(errors)
         self.assertIn("$.commands[0]", joined)
         self.assertNotIn(secret, joined)
+
+    def test_mlxp_json_token_fields_are_detected_and_redacted(self) -> None:
+        reservation = {
+            "reservation_id": "rsv-test",
+            "status": "running",
+            "jupyter_token": "mlxp-jupyter-secret",
+            "nested": {
+                "access_token": "oauth-access-secret",
+                "token": "generic-secret",
+                "custom_token": "custom-secret",
+                "client_secret": "client-secret",
+                "password": "password-secret",
+            },
+            "auth_secret_present": True,
+            "secret_findings": [],
+        }
+
+        findings = find_sensitive_strings(reservation)
+        sanitized = sanitize_jsonable(reservation)
+
+        self.assertEqual(
+            findings,
+            [
+                "$.jupyter_token",
+                "$.nested.access_token",
+                "$.nested.token",
+                "$.nested.custom_token",
+                "$.nested.client_secret",
+                "$.nested.password",
+            ],
+        )
+        self.assertEqual(sanitized["jupyter_token"], "<redacted>")
+        self.assertEqual(sanitized["nested"]["access_token"], "<redacted>")
+        self.assertEqual(sanitized["nested"]["token"], "<redacted>")
+        self.assertEqual(sanitized["nested"]["custom_token"], "<redacted>")
+        self.assertEqual(sanitized["nested"]["client_secret"], "<redacted>")
+        self.assertEqual(sanitized["nested"]["password"], "<redacted>")
+        self.assertIs(sanitized["auth_secret_present"], True)
+        self.assertEqual(sanitized["secret_findings"], [])
+        self.assertEqual(find_sensitive_strings(sanitized), [])
+        self.assertNotIn("mlxp-jupyter-secret", json.dumps(sanitized))
+
+    def test_quoted_token_text_is_sanitized(self) -> None:
+        text = '{"jupyter_token":"mlxp-jupyter-secret","access_token": "oauth-access-secret"}'
+        sanitized = sanitize_text(text)
+        self.assertNotIn("mlxp-jupyter-secret", sanitized)
+        self.assertNotIn("oauth-access-secret", sanitized)
+        self.assertIn('"jupyter_token":"<redacted>"', sanitized)
 
 
 if __name__ == "__main__":

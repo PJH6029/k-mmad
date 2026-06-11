@@ -1,0 +1,2 @@
+217 node /root/.npm/_npx/1afc27b2df6982f0/node_modules/.bin/openai-oauth --host 127.0.0.1 --port 10531
+302 sh -lc PID_FILE="/mnt/ddn/prod-runs/jeonghunpark/code/dokpamo/k-mmad/run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/endpoint/openai-oauth.pid"; if [ -f "$PID_FILE" ]; then kill "$(cat "$PID_FILE")" 2>/dev/null || true; fi; pgrep -af openai-oauth || true

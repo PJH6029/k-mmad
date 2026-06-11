@@ -1,0 +1,5 @@
+2204ea5a39f2646ee5a345d218e06a7ec82b0de74b62c4c9e6c7e15a064d16d7  /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/translation_smoke.jsonl
+6d5afded5253d128784d8448cd91e38f4b301dc01bd431d517af7359822e420e  /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/inspection_examples.json
+a297c1e3e628bb8732a4682b864ce546e610006e6edf6f635de3a2187a616a64  /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/untranslated_fields.json
+aef5e939deab7177e355d0bdce8d1aed741a240ac8e0ae92ce2b5e6d4bf7667b  /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/translation_smoke_summary.json
+da2503f4d39ec7f57630d021fd7e38f352d7b7c785b86adc30bd2d371d2ad60f  /mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/translation_validation.json

@@ -1,0 +1,46 @@
+{
+  "run_id": "kmmad-endpoint-smoke-20260611T134155Z-e9333b2",
+  "created_at": "20260611T134614Z",
+  "status": "passed",
+  "git_sha": "e9333b2ea06b2cc2cdb69228a31f4fc4c2584eb4",
+  "commands": [
+    "npx -y openai-oauth --host 127.0.0.1 --port 10531",
+    "uv run python scripts/kmmad_translate_smoke.py --config <run_dir>/endpoint/openai-oauth-smoke-config.toml --output-dir <artifact_dir> --sample-size 2",
+    "uv run python scripts/kmmad_translate_smoke.py --validate-only <artifact_dir>/translation_smoke.jsonl --untranslated-report <artifact_dir>/untranslated_fields.json"
+  ],
+  "dataset": {
+    "root": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data",
+    "original_subdir": "original/mmad"
+  },
+  "reservation": {
+    "project": "production",
+    "image": "ghcr.io/pjh6029/snupi-personal-codex:20260414",
+    "gpu_count": 1,
+    "exception_reason": "Codex-auth image is scheduled through MLXP reservation board; endpoint inference did not use the H200 GPU."
+  },
+  "image_runtime": {
+    "managed_image_key": "codex",
+    "command": "localhost openai-oauth proxy"
+  },
+  "model": {
+    "identifier": "gpt-5.4",
+    "endpoint_provider": "openai_oauth",
+    "endpoint": "http://127.0.0.1:10531/v1",
+    "auth_mode": "none",
+    "auth_secret_present": true
+  },
+  "artifacts": {
+    "translation_output": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/translation_smoke.jsonl",
+    "untranslated_field_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/untranslated_fields.json",
+    "validation_report": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/translation_validation.json",
+    "inspection_examples": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/inspection_examples.json",
+    "logs": [
+      "/mnt/ddn/prod-runs/jeonghunpark/code/dokpamo/k-mmad/run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/endpoint/openai-oauth.log",
+      "/mnt/ddn/prod-runs/jeonghunpark/code/dokpamo/k-mmad/run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2/endpoint/translation-command.log"
+    ]
+  },
+  "failures_retries": [],
+  "notes": [
+    "No paid OpenAI API-key call was made; API-key mode is covered by local contract tests."
+  ]
+}

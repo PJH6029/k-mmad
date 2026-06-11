@@ -1,0 +1,15 @@
+{
+  "node_id": "1",
+  "gpu_start": 2,
+  "gpu_count": 1,
+  "gpu_indices": [],
+  "start_at": "2026-06-11T22:00:00+09:00",
+  "end_at": "2026-06-11T23:00:00+09:00",
+  "purpose": "SKT Dokpamo - MMAD Translation - endpoint openai-oauth Codex auth smoke (1 GPU shell only because MLXP Codex image is scheduled through reservation board; cancel immediately after smoke)",
+  "managed_image_key": "codex",
+  "registry_profile_key": "",
+  "image_path": "",
+  "command": [],
+  "args": [],
+  "actor_name": ""
+}

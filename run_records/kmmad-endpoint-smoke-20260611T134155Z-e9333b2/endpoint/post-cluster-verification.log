@@ -1,0 +1,40 @@
+### post-cluster verification
+2026-06-11T13:49:58Z
++ uv run python -m unittest discover -s tests
+....
+----------------------------------------------------------------------
+Ran 4 tests in 2.012s
+
+OK
++ uvx ruff check changed files
+All checks passed!
++ PYTHONPATH=scripts uvx pyright scripts tests
+0 errors, 0 warnings, 0 informations
++ mock translation smoke
+translation smoke output: /tmp/kmmad_endpoint_translate_fixture/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_endpoint_translate_fixture/untranslated_fields.json
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
++ copied endpoint translation validation
+{
+  "status": "passed",
+  "rows": 2,
+  "errors": []
+}
++ run-record validation
+{
+  "status": "passed",
+  "errors": []
+}
++ compileall
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
++ git diff --check
++ secret scan with intentional test sentinel allowlist
+secret scan passed; allowlisted intentional fake sentinel in tests/test_endpoint_auth_contract.py

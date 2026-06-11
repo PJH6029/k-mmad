@@ -1,0 +1,15 @@
+{
+  "created_at": "20260611T134614Z",
+  "status": "passed",
+  "git_sha": "e9333b2ea06b2cc2cdb69228a31f4fc4c2584eb4",
+  "run_id": "kmmad-endpoint-smoke-20260611T134155Z-e9333b2",
+  "endpoint_provider": "openai_oauth",
+  "base_url": "http://127.0.0.1:10531/v1",
+  "model": "gpt-5.4",
+  "sample_size": 2,
+  "translate_rc": 0,
+  "validate_rc": 0,
+  "artifacts_dir": "/mnt/ddn/prod-runs/jeonghunpark/data/dokpamo/k-mmad-data/translated/smoke/kmmad-endpoint-smoke-20260611T134155Z-e9333b2",
+  "run_record_dir": "/mnt/ddn/prod-runs/jeonghunpark/code/dokpamo/k-mmad/run_records/kmmad-endpoint-smoke-20260611T134155Z-e9333b2",
+  "secret_findings": []
+}
