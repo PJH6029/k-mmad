@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
+import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 
@@ -35,6 +36,12 @@ class ChatModel:
         if torch.cuda.is_available():
             self.model.to("cuda")
         self.model.eval()
+        stop_ids = [self.tokenizer.eos_token_id]
+        for token in ("<|eot_id|>", "<|im_end|>"):
+            token_id = self.tokenizer.convert_tokens_to_ids(token)
+            if isinstance(token_id, int) and token_id >= 0 and token_id not in stop_ids:
+                stop_ids.append(token_id)
+        self.stop_token_ids = [token_id for token_id in stop_ids if token_id is not None]
 
     def chat(self, messages: list[dict[str, str]], max_tokens: int, temperature: float) -> str:
         import torch
@@ -50,6 +57,7 @@ class ChatModel:
                 max_new_tokens=max_tokens,
                 do_sample=do_sample,
                 temperature=temperature if do_sample else None,
+                eos_token_id=self.stop_token_ids or self.tokenizer.eos_token_id,
                 pad_token_id=self.tokenizer.eos_token_id,
             )
         new_tokens = output_ids[0][inputs["input_ids"].shape[-1] :]
@@ -92,6 +100,7 @@ def make_handler(chat_model: ChatModel) -> type[BaseHTTPRequestHandler]:
                 temperature = float(payload.get("temperature", 0.0))
                 content = chat_model.chat(messages, max_tokens=max_tokens, temperature=temperature)
             except Exception as exc:  # pragma: no cover - exercised on cluster failures
+                traceback.print_exc()
                 self.write_json(500, {"error": {"message": str(exc), "type": type(exc).__name__}})
                 return
             now = int(time.time())
