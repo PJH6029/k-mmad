@@ -1,0 +1,16 @@
+.omx/
+MLXP.md
+__pycache__/
+*.py[cod]
+outputs/
+.venv/
+*.egg-info/
+.env
+
+# Playwright / browser automation byproducts
+.playwright-cli/
+.playwright/
+playwright-report/
+test-results/
+output/playwright/
+trace.zip
