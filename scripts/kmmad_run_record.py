@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from kmmad_common import configured_path, load_config, utc_now, write_json
+from kmmad_common import configured_path, find_sensitive_strings, load_config, sanitize_jsonable, utc_now, write_json
 
 REQUIRED_FIELDS = [
     "run_id",
@@ -65,6 +65,10 @@ def default_record(config: dict[str, Any], run_id: str) -> dict[str, Any]:
             "identifier": config["inference"]["model"],
             "revision": None,
             "endpoint": config["inference"].get("openai_compatible_base_url"),
+            "endpoint_provider": config["inference"].get("endpoint_provider", "openai_compatible"),
+            "auth_mode": config["inference"].get("auth_mode", "none"),
+            "api_key_env": config["inference"].get("api_key_env", "OPENAI_API_KEY"),
+            "auth_secret_present": None,
         },
         "artifacts": {
             "translation_output": None,
@@ -85,6 +89,9 @@ def validate(record: dict[str, Any]) -> list[str]:
     for section in ("dataset", "reservation", "image_runtime", "model", "artifacts"):
         if not isinstance(record.get(section), dict):
             errors.append(f"{section} must be an object")
+    sensitive_paths = find_sensitive_strings(record)
+    if sensitive_paths:
+        errors.append("record contains unredacted secret-like values at: " + ", ".join(sensitive_paths[:10]))
     return errors
 
 
@@ -103,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         config = load_config(args.config)
         run_id = args.run_id or f"kmmad-smoke-{utc_now()}-{git_sha()[:8]}"
         out = args.out or configured_path(config, "run_subdir") / run_id / "run_record.json"
-        record = default_record(config, run_id)
+        record = sanitize_jsonable(default_record(config, run_id))
         write_json(out, record)
         print(f"run record initialized: {out}")
         return 0

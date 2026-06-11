@@ -21,6 +21,16 @@ from typing import Any, Iterable
 TEXT_EXTENSIONS = {".json", ".jsonl", ".csv"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 
+# Conservative redaction helpers for command/log/run-record boundaries.
+# Keep env var names visible, but never persist bearer values, OpenAI-style keys,
+# or OAuth-ish token JSON values.
+AUTH_BEARER_RE = re.compile(r"(Authorization\s*[:=]\s*Bearer\s+)(?!<redacted>|\$[A-Za-z_][A-Za-z0-9_]*)([^\s\"']+)", re.IGNORECASE)
+OPENAI_KEY_RE = re.compile(r"\bsk-[A-Za-z0-9_-]{10,}\b")
+TOKEN_FIELD_RE = re.compile(
+    r"(\b(?:access_token|refresh_token|id_token|api_key|oauth_token)\b\s*[=:]\s*)(?!<redacted>|\$[A-Za-z_][A-Za-z0-9_]*)([^\s,;\"']+)",
+    re.IGNORECASE,
+)
+
 QUESTION_KEYS = ("question", "Question", "query", "prompt", "text")
 OPTION_KEYS = ("options", "Options", "choices", "Choices", "option", "answers")
 CAPTION_KEYS = ("caption", "Caption", "captions", "image_caption", "description")
@@ -50,6 +60,51 @@ STRUCTURAL_TEXT_KEYS = {
     "similar_templates",
     "random_templates",
 }
+
+
+def sanitize_text(text: str, extra_secrets: Iterable[str] | None = None) -> str:
+    """Redact secret-looking values before text is persisted.
+
+    This intentionally preserves variable names such as OPENAI_API_KEY while
+    removing concrete bearer/token values. Callers can pass sentinel/test secrets
+    through ``extra_secrets`` so contract tests verify boundary redaction.
+    """
+
+    sanitized = text
+    for secret in extra_secrets or []:
+        if secret:
+            sanitized = sanitized.replace(secret, "<redacted>")
+    sanitized = AUTH_BEARER_RE.sub(r"\1<redacted>", sanitized)
+    sanitized = OPENAI_KEY_RE.sub("sk-<redacted>", sanitized)
+    sanitized = TOKEN_FIELD_RE.sub(r"\1<redacted>", sanitized)
+    return sanitized
+
+
+def sanitize_jsonable(value: Any, extra_secrets: Iterable[str] | None = None) -> Any:
+    if isinstance(value, str):
+        return sanitize_text(value, extra_secrets)
+    if isinstance(value, list):
+        return [sanitize_jsonable(item, extra_secrets) for item in value]
+    if isinstance(value, dict):
+        return {key: sanitize_jsonable(item, extra_secrets) for key, item in value.items()}
+    return value
+
+
+def find_sensitive_strings(value: Any, *, path: str = "$", extra_secrets: Iterable[str] | None = None) -> list[str]:
+    findings: list[str] = []
+    if isinstance(value, str):
+        sanitized = sanitize_text(value, extra_secrets)
+        if sanitized != value:
+            findings.append(path)
+        return findings
+    if isinstance(value, list):
+        for idx, item in enumerate(value):
+            findings.extend(find_sensitive_strings(item, path=f"{path}[{idx}]", extra_secrets=extra_secrets))
+        return findings
+    if isinstance(value, dict):
+        for key, item in value.items():
+            findings.extend(find_sensitive_strings(item, path=f"{path}.{key}", extra_secrets=extra_secrets))
+    return findings
 
 
 def utc_now() -> str:

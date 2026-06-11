@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import urllib.error
 import urllib.request
@@ -22,6 +23,8 @@ from kmmad_common import (
     load_config,
     load_first_records,
     pick_sample,
+    sanitize_jsonable,
+    sanitize_text,
     utc_now,
     write_json,
 )
@@ -33,6 +36,57 @@ ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 
 def mock_translate(text: str) -> str:
     return f"한국어 번역 초안: {text}"
+
+
+def normalized_auth_mode(inference: dict[str, Any]) -> str:
+    mode = str(inference.get("auth_mode", "none")).strip().lower().replace("-", "_")
+    aliases = {
+        "": "none",
+        "no_auth": "none",
+        "openai_oauth": "none",
+        "oauth_proxy": "none",
+        "api_key": "bearer_env",
+        "openai_api_key": "bearer_env",
+        "bearer": "bearer_env",
+    }
+    return aliases.get(mode, mode)
+
+
+def build_request_headers(config: dict[str, Any]) -> dict[str, str]:
+    inference = config["inference"]
+    headers = {"Content-Type": "application/json"}
+    mode = normalized_auth_mode(inference)
+    if mode == "none":
+        return headers
+    if mode != "bearer_env":
+        raise RuntimeError(f"unsupported inference auth_mode: {mode}")
+    env_name = str(inference.get("api_key_env", "OPENAI_API_KEY"))
+    token = os.environ.get(env_name)
+    if not token:
+        raise RuntimeError(f"inference auth_mode bearer_env requires environment variable: {env_name}")
+    headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+def sanitized_headers(headers: dict[str, str]) -> dict[str, str]:
+    sanitized: dict[str, str] = {}
+    for key, value in headers.items():
+        if key.lower() == "authorization" and value.lower().startswith("bearer "):
+            sanitized[key] = "Bearer <redacted>"
+        else:
+            sanitized[key] = sanitize_text(value)
+    return sanitized
+
+
+def sanitized_inference_summary(config: dict[str, Any]) -> dict[str, Any]:
+    inference = config["inference"]
+    return sanitize_jsonable({
+        "endpoint_provider": inference.get("endpoint_provider", "openai_compatible"),
+        "base_url": inference.get("openai_compatible_base_url"),
+        "model": inference.get("model"),
+        "auth_mode": normalized_auth_mode(inference),
+        "api_key_env": inference.get("api_key_env", "OPENAI_API_KEY"),
+    })
 
 
 def call_openai_compatible(config: dict[str, Any], text: str) -> str:
@@ -59,7 +113,7 @@ def call_openai_compatible(config: dict[str, Any], text: str) -> str:
         ],
     }
     data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+    req = urllib.request.Request(url, data=data, headers=build_request_headers(config), method="POST")
     try:
         with urllib.request.urlopen(req, timeout=int(inference.get("timeout_seconds", 120))) as resp:
             body = json.loads(resp.read().decode("utf-8"))
@@ -219,6 +273,19 @@ def main(argv: list[str] | None = None) -> int:
     write_json(inspection_path, rows[: min(3, len(rows))])
     result = validate_output(output_path, untranslated_report_path)
     write_json(output_dir / "translation_validation.json", result)
+    write_json(output_dir / "translation_smoke_summary.json", {
+        "created_at": utc_now(),
+        "record_file": str(record_path),
+        "sample_size": len(sample),
+        "inference": sanitized_inference_summary(config),
+        "validation": result,
+        "artifacts": {
+            "translation_output": str(output_path),
+            "untranslated_field_report": str(untranslated_report_path),
+            "inspection_examples": str(inspection_path),
+            "validation_report": str(output_dir / "translation_validation.json"),
+        },
+    })
     print(f"translation smoke output: {output_path}")
     print(f"untranslated-field report: {untranslated_report_path}")
     return 0 if result["status"] == "passed" else 1

@@ -33,6 +33,9 @@ preserve_fields = ["answer", "image", "image_path", "id", "metadata", "category"
 report_untranslated_text_fields = true
 
 [inference]
+endpoint_provider = "local_openai_compatible"
+auth_mode = "none"
+api_key_env = "OPENAI_API_KEY"
 openai_compatible_base_url = "http://127.0.0.1:8000/v1"
 model = "Bllossom/llama-3.2-Korean-Bllossom-3B"
 timeout_seconds = 120
@@ -45,3 +48,12 @@ member = "jeonghunpark"
 purpose_prefix = "SKT Dokpamo - MMAD Translation"
 cluster_repo_path = "/mnt/ddn/prod-runs/jeonghunpark/code/dokpamo/k-mmad"
 h200_gate = "Do not reserve 1x H200 until full-data manifest and sanity-check report pass."
+
+# Endpoint/auth mode examples for proprietary endpoint smoke:
+# - openai-oauth localhost proxy: endpoint_provider="openai_oauth", auth_mode="none",
+#   openai_compatible_base_url="http://127.0.0.1:10531/v1"
+# - real OpenAI API-key mode: endpoint_provider="openai", auth_mode="bearer_env",
+#   api_key_env="OPENAI_API_KEY", openai_compatible_base_url="https://api.openai.com/v1"
+# This pass contract-tests the API-key mode only; no paid live OpenAI call.
+[inference.endpoint_auth]
+redact_headers = ["Authorization"]
