@@ -24,7 +24,7 @@ IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 QUESTION_KEYS = ("question", "Question", "query", "prompt", "text")
 OPTION_KEYS = ("options", "Options", "choices", "Choices", "option", "answers")
 CAPTION_KEYS = ("caption", "Caption", "captions", "image_caption", "description")
-PATH_KEYS = ("image", "image_path", "img_path", "path", "filename", "file_name")
+PATH_KEYS = ("query_image", "image", "image_path", "img_path", "path", "filename", "file_name")
 ANSWER_KEYS = ("answer", "Answer", "label", "correct_answer", "gt")
 
 
@@ -68,6 +68,42 @@ def append_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> None:
             fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+def flatten_mmad_mapping(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize MMAD's image-keyed JSON into one row per QA turn.
+
+    The upstream `mmad.json` is a mapping:
+
+    `{query_image_path: {"conversation": [{"Question": ..., "Options": ...}, ...]}}`
+
+    Translation smoke tooling is simpler and safer when each conversation turn is
+    a row while structural image/template/mask fields remain preserved.
+    """
+
+    rows: list[dict[str, Any]] = []
+    for image_key, value in data.items():
+        if not isinstance(value, dict):
+            rows.append({"mmad_image_key": image_key, "value": value})
+            continue
+
+        conversations = value.get("conversation")
+        base = {key: item for key, item in value.items() if key != "conversation"}
+        base.setdefault("query_image", image_key)
+        base.setdefault("mmad_image_key", image_key)
+
+        if isinstance(conversations, list):
+            for idx, turn in enumerate(conversations):
+                row = dict(base)
+                row["conversation_index"] = idx
+                if isinstance(turn, dict):
+                    row.update(turn)
+                else:
+                    row["conversation"] = turn
+                rows.append(row)
+        else:
+            rows.append(base)
+    return rows
+
+
 def read_json_like(path: Path) -> list[dict[str, Any]]:
     if path.suffix.lower() == ".jsonl":
         records: list[dict[str, Any]] = []
@@ -88,6 +124,10 @@ def read_json_like(path: Path) -> list[dict[str, Any]]:
             value = data.get(key)
             if isinstance(value, list):
                 return [item for item in value if isinstance(item, dict)]
+        if data and all(isinstance(value, dict) for value in data.values()):
+            flattened = flatten_mmad_mapping(data)
+            if flattened:
+                return flattened
         return [data]
     return []
 
@@ -154,7 +194,7 @@ def flatten_text(value: Any) -> list[str]:
     if isinstance(value, str):
         return [value] if value.strip() else []
     if isinstance(value, (int, float, bool)):
-        return [str(value)]
+        return []
     if isinstance(value, list):
         out: list[str] = []
         for item in value:
@@ -168,8 +208,28 @@ def flatten_text(value: Any) -> list[str]:
     return [str(value)]
 
 
+def looks_path_like(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped:
+        return False
+    suffix = Path(stripped.split("?", 1)[0]).suffix.lower()
+    if suffix in IMAGE_EXTENSIONS:
+        return True
+    return "/" in stripped and " " not in stripped
+
+
+def looks_label_like(text: str) -> bool:
+    stripped = text.strip()
+    return bool(re.fullmatch(r"[A-Z]|\d+|true|false|yes|no", stripped, flags=re.IGNORECASE))
+
+
 def looks_textual(value: Any) -> bool:
-    return any(re.search(r"[A-Za-z가-힣]", text) for text in flatten_text(value))
+    for text in flatten_text(value):
+        if looks_path_like(text) or looks_label_like(text):
+            continue
+        if re.search(r"[A-Za-z가-힣]", text):
+            return True
+    return False
 
 
 def discover_text_fields(row: dict[str, Any]) -> list[str]:

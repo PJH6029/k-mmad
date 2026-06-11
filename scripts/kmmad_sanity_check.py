@@ -26,7 +26,11 @@ from kmmad_common import (
 )
 
 
-def inspect_archives(root: Path, expected: list[str]) -> dict[str, Any]:
+def inspect_source_files(root: Path, expected: list[str]) -> dict[str, Any]:
+    expected_archives = [name for name in expected if Path(name).suffix.lower() == ".zip"]
+    present_expected_files = sorted(name for name in expected if (root / name).exists())
+    missing_expected_files = sorted(set(expected).difference(present_expected_files))
+
     archive_reports = []
     for archive in sorted(root.glob("*.zip")):
         item = {"path": str(archive), "size_bytes": archive.stat().st_size, "valid_zip": False, "members": None, "image_members": None}
@@ -41,9 +45,12 @@ def inspect_archives(root: Path, expected: list[str]) -> dict[str, Any]:
         archive_reports.append(item)
     present = {Path(item["path"]).name for item in archive_reports}
     return {
-        "expected_archives": expected,
-        "present_expected_archives": sorted(present.intersection(expected)),
-        "missing_expected_archives": sorted(set(expected).difference(present)),
+        "expected_files": expected,
+        "present_expected_files": present_expected_files,
+        "missing_expected_files": missing_expected_files,
+        "expected_archives": expected_archives,
+        "present_expected_archives": sorted(present.intersection(expected_archives)),
+        "missing_expected_archives": sorted(set(expected_archives).difference(present)),
         "archives": archive_reports,
     }
 
@@ -104,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         "status": "failed",
         "checks": {},
         "errors": [],
+        "warnings": [],
     }
 
     if not root.exists():
@@ -114,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
 
     record_path, records = load_first_records(root)
     images = discover_image_paths(root)
-    archive_report = inspect_archives(root, source.get("archive_files", []))
+    source_report = inspect_source_files(root, source.get("archive_files", []))
     field_report = row_field_report(records, int(smoke.get("sample_size", 8)), int(smoke.get("sample_seed", 6029))) if records else {}
 
     report["checks"] = {
@@ -122,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
         "row_count": len(records),
         "expected_rows": expected_rows,
         "image_file_count_unpacked": len(images),
-        "archives": archive_report,
+        "source_files": source_report,
         "field_report": field_report,
     }
 
@@ -131,14 +139,20 @@ def main(argv: list[str] | None = None) -> int:
     elif expected_rows and len(records) != expected_rows and not args.allow_partial:
         report["errors"].append(f"row count mismatch: got {len(records)}, expected {expected_rows}")
 
-    if archive_report["missing_expected_archives"] and not args.allow_partial:
-        report["errors"].append("missing expected archive/source files: " + ", ".join(archive_report["missing_expected_archives"]))
+    if source_report["missing_expected_files"] and not args.allow_partial:
+        report["errors"].append("missing expected source files: " + ", ".join(source_report["missing_expected_files"]))
+
+    invalid_archives = [Path(item["path"]).name for item in source_report["archives"] if not item.get("valid_zip")]
+    if invalid_archives and not args.allow_partial:
+        report["errors"].append("invalid zip archives: " + ", ".join(invalid_archives))
 
     if records and field_report:
         missing = field_report["missing_in_sample"]
-        for required in ("question", "options", "caption"):
+        for required in ("question", "options"):
             if missing.get(required, 0) == field_report["sample_size"]:
                 report["errors"].append(f"required translation field absent in sampled rows: {required}")
+        if missing.get("caption", 0) == field_report["sample_size"]:
+            report["warnings"].append("caption field absent in sampled rows; translation smoke will report caption as unavailable/not translated")
 
     report["status"] = "passed" if not report["errors"] else "failed"
     write_json(report_out, report)
