@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -55,6 +56,34 @@ def inspect_source_files(root: Path, expected: list[str]) -> dict[str, Any]:
     }
 
 
+def inspect_mmad_json(root: Path) -> dict[str, Any]:
+    path = root / "mmad.json"
+    report: dict[str, Any] = {"path": str(path), "exists": path.exists()}
+    if not path.exists():
+        return report
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:  # pragma: no cover - defensive report path
+        report["error"] = str(exc)
+        return report
+    if not isinstance(data, dict):
+        report["type"] = type(data).__name__
+        return report
+    conversation_counts = [
+        len(value.get("conversation", []))
+        for value in data.values()
+        if isinstance(value, dict)
+    ]
+    report.update({
+        "type": "image_keyed_mapping",
+        "image_count": len(data),
+        "conversation_rows": sum(conversation_counts),
+        "min_conversations_per_image": min(conversation_counts) if conversation_counts else 0,
+        "max_conversations_per_image": max(conversation_counts) if conversation_counts else 0,
+    })
+    return report
+
+
 def row_field_report(records: list[dict[str, Any]], sample_size: int, seed: int) -> dict[str, Any]:
     sample = pick_sample(records, sample_size, seed)
     missing = {"question": 0, "options": 0, "caption": 0, "answer": 0, "path": 0}
@@ -104,6 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     root = args.dataset or configured_path(config, "original_subdir")
     report_out = args.report_out or configured_path(config, "manifest_subdir") / f"sanity-{utc_now()}.json"
     expected_rows = args.expected_rows if args.expected_rows is not None else int(source.get("expected_rows", 0))
+    expected_images = int(source.get("expected_images", 0))
 
     report: dict[str, Any] = {
         "created_at": utc_now(),
@@ -123,14 +153,17 @@ def main(argv: list[str] | None = None) -> int:
     record_path, records = load_first_records(root)
     images = discover_image_paths(root)
     source_report = inspect_source_files(root, source.get("archive_files", []))
+    mmad_json_report = inspect_mmad_json(root)
     field_report = row_field_report(records, int(smoke.get("sample_size", 8)), int(smoke.get("sample_seed", 6029))) if records else {}
 
     report["checks"] = {
         "record_file": str(record_path) if record_path else None,
         "row_count": len(records),
         "expected_rows": expected_rows,
+        "expected_images": expected_images,
         "image_file_count_unpacked": len(images),
         "source_files": source_report,
+        "mmad_json": mmad_json_report,
         "field_report": field_report,
     }
 
@@ -145,6 +178,11 @@ def main(argv: list[str] | None = None) -> int:
     invalid_archives = [Path(item["path"]).name for item in source_report["archives"] if not item.get("valid_zip")]
     if invalid_archives and not args.allow_partial:
         report["errors"].append("invalid zip archives: " + ", ".join(invalid_archives))
+
+    if expected_images and mmad_json_report.get("image_count") != expected_images and not args.allow_partial:
+        report["errors"].append(
+            f"MMAD image-key count mismatch: got {mmad_json_report.get('image_count')}, expected {expected_images}"
+        )
 
     if records and field_report:
         missing = field_report["missing_in_sample"]

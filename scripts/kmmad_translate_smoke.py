@@ -72,10 +72,11 @@ def translate_value(value: Any, config: dict[str, Any], mock: bool) -> Any:
     return value
 
 
-def build_translation_row(row: dict[str, Any], config: dict[str, Any], mock: bool) -> tuple[dict[str, Any], list[str]]:
+def build_translation_row(row: dict[str, Any], config: dict[str, Any], mock: bool) -> tuple[dict[str, Any], list[str], list[str]]:
     q_key, q = get_first(row, QUESTION_KEYS)
     o_key, o = get_first(row, OPTION_KEYS)
     c_key, c = get_first(row, CAPTION_KEYS)
+    missing_scope: list[str] = []
     translated: dict[str, Any] = {
         "source": row,
         "translated": {},
@@ -83,14 +84,22 @@ def build_translation_row(row: dict[str, Any], config: dict[str, Any], mock: boo
     }
     if q_key:
         translated["translated"][q_key] = translate_value(q, config, mock)
+    else:
+        missing_scope.append("question")
     if o_key:
         translated["translated"][o_key] = translate_value(o, config, mock)
+    else:
+        missing_scope.append("options")
     if c_key:
         translated["translated"][c_key] = translate_value(c, config, mock)
+    else:
+        missing_scope.append("caption")
     all_text = set(discover_text_fields(row))
     translated_keys = {key for key in (q_key, o_key, c_key) if key}
     untranslated = sorted(all_text - translated_keys)
-    return translated, untranslated
+    if missing_scope:
+        translated["missing_translation_scope"] = missing_scope
+    return translated, untranslated, missing_scope
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -156,11 +165,14 @@ def main(argv: list[str] | None = None) -> int:
     inspection_path = output_dir / "inspection_examples.json"
 
     all_untranslated: dict[str, int] = {}
+    missing_configured: dict[str, int] = {}
     with output_path.open("w", encoding="utf-8") as fh:
         for row in sample:
-            translated, untranslated = build_translation_row(row, config, args.mock)
+            translated, untranslated, missing_scope = build_translation_row(row, config, args.mock)
             for field in untranslated:
                 all_untranslated[field] = all_untranslated.get(field, 0) + 1
+            for field in missing_scope:
+                missing_configured[field] = missing_configured.get(field, 0) + 1
             fh.write(json.dumps(translated, ensure_ascii=False) + "\n")
 
     write_json(untranslated_report_path, {
@@ -169,6 +181,7 @@ def main(argv: list[str] | None = None) -> int:
         "sample_size": len(sample),
         "translated_scope": ["question", "options", "caption"],
         "untranslated_text_fields": all_untranslated,
+        "missing_configured_translation_fields": missing_configured,
     })
     rows = read_jsonl(output_path)
     write_json(inspection_path, rows[: min(3, len(rows))])

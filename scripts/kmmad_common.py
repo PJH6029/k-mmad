@@ -26,6 +26,30 @@ OPTION_KEYS = ("options", "Options", "choices", "Choices", "option", "answers")
 CAPTION_KEYS = ("caption", "Caption", "captions", "image_caption", "description")
 PATH_KEYS = ("query_image", "image", "image_path", "img_path", "path", "filename", "file_name")
 ANSWER_KEYS = ("answer", "Answer", "label", "correct_answer", "gt")
+STRUCTURAL_TEXT_KEYS = {
+    "answer",
+    "gt",
+    "label",
+    "id",
+    "dataset",
+    "class",
+    "class_name",
+    "category",
+    "split",
+    "query_image",
+    "template_image",
+    "mask",
+    "mask_path",
+    "image",
+    "image_path",
+    "img_path",
+    "path",
+    "filename",
+    "file_name",
+    "mmad_image_key",
+    "similar_templates",
+    "random_templates",
+}
 
 
 def utc_now() -> str:
@@ -147,7 +171,7 @@ def read_records(path: Path) -> list[dict[str, Any]]:
 
 
 def candidate_record_files(root: Path) -> list[Path]:
-    preferred = ["mmad.json", "metadata.csv", "MMAD.json", "annotations.json"]
+    preferred = ["metadata.csv", "mmad.json", "MMAD.json", "annotations.json"]
     found: list[Path] = []
     for name in preferred:
         found.extend(root.rglob(name))
@@ -233,7 +257,11 @@ def looks_textual(value: Any) -> bool:
 
 
 def discover_text_fields(row: dict[str, Any]) -> list[str]:
-    return sorted(str(key) for key, value in row.items() if looks_textual(value))
+    return sorted(
+        str(key)
+        for key, value in row.items()
+        if str(key).lower() not in STRUCTURAL_TEXT_KEYS and looks_textual(value)
+    )
 
 
 def discover_image_paths(root: Path) -> list[Path]:
