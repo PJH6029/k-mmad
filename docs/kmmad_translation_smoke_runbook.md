@@ -213,3 +213,65 @@ Bind `openai-oauth` only to `127.0.0.1`; do not expose a public proxy. Real Open
 - `auth_mode = "openai_oauth"` legacy alias, if accepted, must normalize to no-auth behavior.
 - `auth_mode = "bearer_env"` must send `Authorization: Bearer $OPENAI_API_KEY` only to a fake/local contract endpoint in this pass.
 - Persist env var names, not secret values.
+
+## HF dataset export / repackaging pipeline
+
+This section covers the post-translation path for later model evaluation. It assumes that full translation and translation quality control have already been completed upstream; the exporter records the declared QC status but does not score translation quality.
+
+### Contract
+
+Input:
+
+- one or more existing `translation_smoke.jsonl` bundles, or a multi-benchmark directory with `general_vqa_translation_summary.json`;
+- source/provenance metadata such as the original HF dataset ID, config, and revision;
+- a declared translation-QC status (`unchecked`, `passed`, `failed`, or `needs_review`).
+
+Output:
+
+```text
+<export-dir>/
+  dataset/                    # Hugging Face DatasetDict.save_to_disk artifact
+  data/<split>.jsonl           # normalized review/debug shards
+  README.md                    # dataset card for future Hub/manual upload
+  hf_export_manifest.json      # provenance, split counts, no-upload proof
+  hf_export_validation.json    # load_from_disk/count/record-id/secret-scan validation
+```
+
+Rows keep source IDs, benchmark IDs, split/task metadata, media references, answers/preserve fields, skipped fields, original source JSON, and translated Korean text fields. Heterogeneous nested structures are stored as JSON strings to keep Arrow columns stable across MMAD and general VQA benchmarks. MMAD multi-turn rows include `conversation_index` in the derived source ID so `record_id` remains unique across QA turns from the same image.
+
+The implementation follows current Hugging Face `datasets` API guidance: create in-memory datasets from normalized dictionaries, then persist/reload with `DatasetDict.save_to_disk()` and `datasets.load_from_disk()` for local evaluation reuse. `--hub-repo-id` records an intended future target and dry-run `push_to_hub` command in the manifest only; it never uploads. The exporter redacts secret-like values before writing normalized rows, stores row-level translation artifact provenance as relative labels such as `blink/translation_smoke.jsonl`, and validates the manifest, dataset card, every `data/*.jsonl` shard, and loaded dataset rows for secret-like values and duplicate/missing `record_id`s.
+
+### Local export smoke
+
+```bash
+# Produce a small translated fixture bundle first.
+uv run python scripts/kmmad_translate_smoke.py \
+  --dataset tests/fixtures/general_vqa \
+  --benchmarks blink,mmmu_pro \
+  --output-dir /tmp/kmmad-general-vqa-translated \
+  --sample-size 1 \
+  --mock \
+  --concurrency 2
+
+# Repackage into HF datasets format.
+uv run python scripts/kmmad_hf_export.py \
+  --translation-output /tmp/kmmad-general-vqa-translated \
+  --output-dir /tmp/kmmad-general-vqa-hf-export \
+  --dataset-name k-general-vqa-ko \
+  --original-hf-dataset fixture/general-vqa \
+  --original-hf-config adapter-fixture \
+  --translation-qc-status passed \
+  --hub-repo-id pjh6029/k-general-vqa-ko
+
+# Validate the saved artifact can be loaded and matches the manifest.
+uv run python scripts/kmmad_hf_export.py --validate-only /tmp/kmmad-general-vqa-hf-export
+```
+
+### Safety gates
+
+- The exporter refuses to write into a non-empty output directory; use a fresh export path for every run.
+- It validates upstream translation bundles by default before packaging.
+- It redacts secret-like values before row persistence and scans the manifest, dataset card, every split JSONL shard, and loaded HF dataset rows during validation.
+- It records QC as a declared upstream status. Production/release-ready exports require `translation_qc_status=passed` plus a machine-readable `--translation-qc-report`; otherwise the manifest/card should be treated as a non-release packaging artifact.
+- Directory inputs are fail-closed: an export directory must either be a direct translation bundle containing `translation_smoke.jsonl` or a multi-benchmark bundle with `general_vqa_translation_summary.json`; nested stale folders are not auto-discovered.
+- It does not call `push_to_hub`, make paid API calls, reserve GPUs, mutate source datasets, or delete existing dataset-path data.

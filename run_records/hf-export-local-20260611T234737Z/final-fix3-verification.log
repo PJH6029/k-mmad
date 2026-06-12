@@ -1,0 +1,519 @@
+## final-fix3 unittest
+.....................Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 166.63 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 163.61 examples/s]
+..general VQA translation smoke output: /tmp/tmp2lpdlerp/translations
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 182.53 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 179.17 examples/s]
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 188.40 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 185.54 examples/s]
+.Saving the dataset (0/1 shards):   0%|          | 0/2 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 368.16 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 361.87 examples/s]
+Saving the dataset (0/1 shards):   0%|          | 0/2 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 345.12 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 339.32 examples/s]
+.Saving the dataset (0/1 shards):   0%|          | 0/2 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 359.67 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 349.74 examples/s]
+.translation smoke output: /tmp/tmprlbhaise/mmad-translations/translation_smoke.jsonl
+untranslated-field report: /tmp/tmprlbhaise/mmad-translations/untranslated_fields.json
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 199.90 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 196.25 examples/s]
+.{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260612T001336Z",
+    "dataset_name": "k-mmad-ko-fixture",
+    "original_hf": {
+      "dataset": "jiang-cc/MMAD",
+      "config": "default",
+      "revision": ""
+    },
+    "translation": {
+      "input_roots": [
+        "input-00-mmad_translations"
+      ],
+      "jsonl_files": [
+        "input-00-mmad_translations/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": null,
+      "qc_attestation_present": false,
+      "release_ready": false,
+      "qc_boundary": "Exporter records declared QC status; production release requires an external machine-readable QC report path."
+    },
+    "export": {
+      "output_dir": ".",
+      "dataset_dir": "dataset",
+      "data_dir": "data",
+      "dataset_card": "README.md",
+      "hub_repo_id": null,
+      "hub_upload_performed": false,
+      "push_to_hub_command": null
+    },
+    "splits": {
+      "test": {
+        "num_rows": 1,
+        "jsonl": "data/test.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": ".",
+      "splits": {
+        "test": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": ".",
+  "splits": {
+    "test": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+Saving the dataset (0/1 shards):   0%|          | 0/2 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 381.93 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 2/2 [00:00<00:00, 376.02 examples/s]
+..
+----------------------------------------------------------------------
+Ran 29 tests in 4.822s
+
+OK
+## final-fix3 compileall
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/general_vqa'...
+Listing 'tests/fixtures/general_vqa/blink'...
+Listing 'tests/fixtures/general_vqa/mega_bench'...
+Listing 'tests/fixtures/general_vqa/mme_realworld'...
+Listing 'tests/fixtures/general_vqa/mmmu_pro'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
+## final-fix3 ruff
+All checks passed!
+## final-fix3 pyright
+0 errors, 0 warnings, 0 informations
+## final-fix3 general vqa hf export smoke
+general VQA translation smoke output: /tmp/kmmad_hf_export_general
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 196.36 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 192.89 examples/s]
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 179.10 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 176.75 examples/s]
+{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260612T001337Z",
+    "dataset_name": "k-general-vqa-ko",
+    "original_hf": {
+      "dataset": "fixture/general-vqa",
+      "config": "adapter-fixture",
+      "revision": ""
+    },
+    "translation": {
+      "input_roots": [
+        "input-00-kmmad_hf_export_general"
+      ],
+      "jsonl_files": [
+        "input-00-kmmad_hf_export_general/blink/translation_smoke.jsonl",
+        "input-00-kmmad_hf_export_general/mmmu_pro/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": "qc/report.json",
+      "qc_attestation_present": true,
+      "release_ready": true,
+      "qc_boundary": "Exporter records declared QC status; production release requires an external machine-readable QC report path."
+    },
+    "export": {
+      "output_dir": ".",
+      "dataset_dir": "dataset",
+      "data_dir": "data",
+      "dataset_card": "README.md",
+      "hub_repo_id": "pjh6029/k-general-vqa-ko",
+      "hub_upload_performed": false,
+      "push_to_hub_command": "load_from_disk('dataset').push_to_hub('pjh6029/k-general-vqa-ko')"
+    },
+    "splits": {
+      "val": {
+        "num_rows": 1,
+        "jsonl": "data/val.jsonl"
+      },
+      "validation": {
+        "num_rows": 1,
+        "jsonl": "data/validation.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": ".",
+      "splits": {
+        "val": 1,
+        "validation": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": ".",
+  "splits": {
+    "val": 1,
+    "validation": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+## final-fix3 mmad hf export smoke
+translation smoke output: /tmp/kmmad_hf_export_mmad/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_hf_export_mmad/untranslated_fields.json
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 191.63 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 187.87 examples/s]
+{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260612T001339Z",
+    "dataset_name": "k-mmad-ko",
+    "original_hf": {
+      "dataset": "jiang-cc/MMAD",
+      "config": "default",
+      "revision": ""
+    },
+    "translation": {
+      "input_roots": [
+        "input-00-kmmad_hf_export_mmad"
+      ],
+      "jsonl_files": [
+        "input-00-kmmad_hf_export_mmad/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": "qc/report.json",
+      "qc_attestation_present": true,
+      "release_ready": true,
+      "qc_boundary": "Exporter records declared QC status; production release requires an external machine-readable QC report path."
+    },
+    "export": {
+      "output_dir": ".",
+      "dataset_dir": "dataset",
+      "data_dir": "data",
+      "dataset_card": "README.md",
+      "hub_repo_id": null,
+      "hub_upload_performed": false,
+      "push_to_hub_command": null
+    },
+    "splits": {
+      "test": {
+        "num_rows": 1,
+        "jsonl": "data/test.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": ".",
+      "splits": {
+        "test": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": ".",
+  "splits": {
+    "test": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+## final-fix3 diff check

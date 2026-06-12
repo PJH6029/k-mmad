@@ -1,0 +1,505 @@
+## post-clean unittest
+.....................general VQA translation smoke output: /tmp/tmpam528m48/translations
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 183.42 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 179.70 examples/s]
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 172.88 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 169.78 examples/s]
+.translation smoke output: /tmp/tmpng084t6k/mmad-translations/translation_smoke.jsonl
+untranslated-field report: /tmp/tmpng084t6k/mmad-translations/untranslated_fields.json
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 178.87 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 175.39 examples/s]
+..
+----------------------------------------------------------------------
+Ran 24 tests in 4.722s
+
+OK
+{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260611T235117Z",
+    "dataset_name": "k-mmad-ko-fixture",
+    "original_hf": {
+      "dataset": "jiang-cc/MMAD",
+      "config": "default",
+      "revision": ""
+    },
+    "translation": {
+      "outputs": [
+        "/tmp/tmpng084t6k/mmad-translations"
+      ],
+      "jsonl_files": [
+        "/tmp/tmpng084t6k/mmad-translations/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": null
+    },
+    "export": {
+      "output_dir": "/tmp/tmpng084t6k/hf-export",
+      "dataset_dir": "/tmp/tmpng084t6k/hf-export/dataset",
+      "data_dir": "/tmp/tmpng084t6k/hf-export/data",
+      "dataset_card": "/tmp/tmpng084t6k/hf-export/README.md",
+      "hub_repo_id": null,
+      "hub_upload_performed": false,
+      "push_to_hub_command": null
+    },
+    "splits": {
+      "test": {
+        "num_rows": 1,
+        "jsonl": "/tmp/tmpng084t6k/hf-export/data/test.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": "/tmp/tmpng084t6k/hf-export",
+      "splits": {
+        "test": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": "/tmp/tmpng084t6k/hf-export",
+  "splits": {
+    "test": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+## post-clean compileall
+Listing 'scripts'...
+Listing 'tests'...
+Listing 'tests/fixtures'...
+Listing 'tests/fixtures/general_vqa'...
+Listing 'tests/fixtures/general_vqa/blink'...
+Listing 'tests/fixtures/general_vqa/mega_bench'...
+Listing 'tests/fixtures/general_vqa/mme_realworld'...
+Listing 'tests/fixtures/general_vqa/mmmu_pro'...
+Listing 'tests/fixtures/mmad_sample'...
+Listing 'tests/fixtures/mmad_sample/images'...
+## post-clean ruff
+All checks passed!
+## post-clean pyright
+0 errors, 0 warnings, 0 informations
+## post-clean general vqa hf export smoke
+general VQA translation smoke output: /tmp/kmmad_hf_export_general
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 185.01 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 180.51 examples/s]
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 181.13 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 178.43 examples/s]
+{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260611T235119Z",
+    "dataset_name": "k-general-vqa-ko",
+    "original_hf": {
+      "dataset": "fixture/general-vqa",
+      "config": "adapter-fixture",
+      "revision": ""
+    },
+    "translation": {
+      "outputs": [
+        "/tmp/kmmad_hf_export_general"
+      ],
+      "jsonl_files": [
+        "/tmp/kmmad_hf_export_general/blink/translation_smoke.jsonl",
+        "/tmp/kmmad_hf_export_general/mmmu_pro/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": null
+    },
+    "export": {
+      "output_dir": "/tmp/kmmad_hf_export_general_out",
+      "dataset_dir": "/tmp/kmmad_hf_export_general_out/dataset",
+      "data_dir": "/tmp/kmmad_hf_export_general_out/data",
+      "dataset_card": "/tmp/kmmad_hf_export_general_out/README.md",
+      "hub_repo_id": "pjh6029/k-general-vqa-ko",
+      "hub_upload_performed": false,
+      "push_to_hub_command": "load_from_disk('/tmp/kmmad_hf_export_general_out/dataset').push_to_hub('pjh6029/k-general-vqa-ko')"
+    },
+    "splits": {
+      "val": {
+        "num_rows": 1,
+        "jsonl": "/tmp/kmmad_hf_export_general_out/data/val.jsonl"
+      },
+      "validation": {
+        "num_rows": 1,
+        "jsonl": "/tmp/kmmad_hf_export_general_out/data/validation.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": "/tmp/kmmad_hf_export_general_out",
+      "splits": {
+        "val": 1,
+        "validation": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": "/tmp/kmmad_hf_export_general_out",
+  "splits": {
+    "val": 1,
+    "validation": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+## post-clean mmad hf export smoke
+translation smoke output: /tmp/kmmad_hf_export_mmad/translation_smoke.jsonl
+untranslated-field report: /tmp/kmmad_hf_export_mmad/untranslated_fields.json
+Saving the dataset (0/1 shards):   0%|          | 0/1 [00:00<?, ? examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 172.93 examples/s]Saving the dataset (1/1 shards): 100%|██████████| 1/1 [00:00<00:00, 168.89 examples/s]
+{
+  "status": "passed",
+  "manifest": {
+    "schema_version": 1,
+    "created_at": "20260611T235120Z",
+    "dataset_name": "k-mmad-ko",
+    "original_hf": {
+      "dataset": "jiang-cc/MMAD",
+      "config": "default",
+      "revision": ""
+    },
+    "translation": {
+      "outputs": [
+        "/tmp/kmmad_hf_export_mmad"
+      ],
+      "jsonl_files": [
+        "/tmp/kmmad_hf_export_mmad/translation_smoke.jsonl"
+      ],
+      "run_id": null,
+      "qc_status": "passed",
+      "qc_report": null
+    },
+    "export": {
+      "output_dir": "/tmp/kmmad_hf_export_mmad_out",
+      "dataset_dir": "/tmp/kmmad_hf_export_mmad_out/dataset",
+      "data_dir": "/tmp/kmmad_hf_export_mmad_out/data",
+      "dataset_card": "/tmp/kmmad_hf_export_mmad_out/README.md",
+      "hub_repo_id": null,
+      "hub_upload_performed": false,
+      "push_to_hub_command": null
+    },
+    "splits": {
+      "test": {
+        "num_rows": 1,
+        "jsonl": "/tmp/kmmad_hf_export_mmad_out/data/test.jsonl"
+      }
+    },
+    "columns": [
+      "record_id",
+      "dataset_name",
+      "benchmark_id",
+      "benchmark_name",
+      "source_id",
+      "split",
+      "task",
+      "media",
+      "question_original",
+      "options_original_json",
+      "caption_original",
+      "instruction_original",
+      "question_ko",
+      "options_ko_json",
+      "caption_ko",
+      "instruction_ko",
+      "answer",
+      "translated_text_fields_json",
+      "preserve_fields_json",
+      "skip_fields_json",
+      "source_record_json",
+      "translation_scope",
+      "translation_artifact_path",
+      "translation_run_id",
+      "translation_qc_status",
+      "translation_qc_report",
+      "original_hf_dataset",
+      "original_hf_config",
+      "original_hf_revision",
+      "exported_at",
+      "export_schema_version"
+    ],
+    "validation": {
+      "status": "passed",
+      "output_dir": "/tmp/kmmad_hf_export_mmad_out",
+      "splits": {
+        "test": 1
+      },
+      "columns": [
+        "answer",
+        "benchmark_id",
+        "benchmark_name",
+        "caption_ko",
+        "caption_original",
+        "dataset_name",
+        "export_schema_version",
+        "exported_at",
+        "instruction_ko",
+        "instruction_original",
+        "media",
+        "options_ko_json",
+        "options_original_json",
+        "original_hf_config",
+        "original_hf_dataset",
+        "original_hf_revision",
+        "preserve_fields_json",
+        "question_ko",
+        "question_original",
+        "record_id",
+        "skip_fields_json",
+        "source_id",
+        "source_record_json",
+        "split",
+        "task",
+        "translated_text_fields_json",
+        "translation_artifact_path",
+        "translation_qc_report",
+        "translation_qc_status",
+        "translation_run_id",
+        "translation_scope"
+      ],
+      "errors": []
+    }
+  }
+}
+{
+  "status": "passed",
+  "output_dir": "/tmp/kmmad_hf_export_mmad_out",
+  "splits": {
+    "test": 1
+  },
+  "columns": [
+    "answer",
+    "benchmark_id",
+    "benchmark_name",
+    "caption_ko",
+    "caption_original",
+    "dataset_name",
+    "export_schema_version",
+    "exported_at",
+    "instruction_ko",
+    "instruction_original",
+    "media",
+    "options_ko_json",
+    "options_original_json",
+    "original_hf_config",
+    "original_hf_dataset",
+    "original_hf_revision",
+    "preserve_fields_json",
+    "question_ko",
+    "question_original",
+    "record_id",
+    "skip_fields_json",
+    "source_id",
+    "source_record_json",
+    "split",
+    "task",
+    "translated_text_fields_json",
+    "translation_artifact_path",
+    "translation_qc_report",
+    "translation_qc_status",
+    "translation_run_id",
+    "translation_scope"
+  ],
+  "errors": []
+}
+## post-clean diff check

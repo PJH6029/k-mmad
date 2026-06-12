@@ -71,3 +71,12 @@ requires_openai_oauth_evidence = true
 [general_vqa.parallelism]
 default_concurrency = 2
 deterministic_order = true
+
+[hf_export]
+dataset_name = "k-mmad-ko"
+original_hf_dataset = "jiang-cc/MMAD"
+original_hf_config = "default"
+original_hf_revision = ""
+default_split = "test"
+fallback_benchmark_id = "mmad"
+translation_qc_status = "unchecked"

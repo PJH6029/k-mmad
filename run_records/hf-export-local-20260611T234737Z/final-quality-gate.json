@@ -1,0 +1,38 @@
+{
+  "aiSlopCleaner": {
+    "status": "passed",
+    "evidence": "run_records/hf-export-local-20260611T234737Z/quality-ai-slop-cleaner.md"
+  },
+  "verification": {
+    "status": "passed",
+    "commands": [
+      "uv run python -m unittest discover -s tests",
+      "uv run python -m compileall scripts tests",
+      "uvx ruff check README.md configs/kmmad_translation_smoke.toml docs/kmmad_translation_smoke_runbook.md scripts tests",
+      "PYTHONPATH=scripts uvx pyright scripts tests",
+      "uv run python scripts/kmmad_translate_smoke.py --dataset tests/fixtures/general_vqa --benchmarks blink,mmmu_pro --output-dir /tmp/kmmad_hf_export_general --sample-size 1 --mock --concurrency 2",
+      "uv run python scripts/kmmad_hf_export.py --translation-output /tmp/kmmad_hf_export_general --output-dir /tmp/kmmad_hf_export_general_out --dataset-name k-general-vqa-ko --original-hf-dataset fixture/general-vqa --original-hf-config adapter-fixture --translation-qc-status passed --translation-qc-report qc/report.json --hub-repo-id pjh6029/k-general-vqa-ko",
+      "uv run python scripts/kmmad_hf_export.py --validate-only /tmp/kmmad_hf_export_general_out",
+      "uv run python scripts/kmmad_translate_smoke.py --dataset tests/fixtures/mmad_sample --output-dir /tmp/kmmad_hf_export_mmad --sample-size 1 --mock",
+      "uv run python scripts/kmmad_hf_export.py --translation-output /tmp/kmmad_hf_export_mmad --output-dir /tmp/kmmad_hf_export_mmad_out --dataset-name k-mmad-ko --original-hf-dataset jiang-cc/MMAD --translation-qc-status passed --translation-qc-report qc/report.json",
+      "uv run python scripts/kmmad_hf_export.py --validate-only /tmp/kmmad_hf_export_mmad_out",
+      "git diff --check"
+    ],
+    "evidence": "run_records/hf-export-local-20260611T234737Z/final-fix3-verification.log"
+  },
+  "codeReview": {
+    "recommendation": "APPROVE",
+    "architectStatus": "CLEAR",
+    "evidence": "run_records/hf-export-local-20260611T234737Z/final-code-review.md and final-architect-review.md",
+    "independentReview": {
+      "codeReviewer": {
+        "agentRole": "code-reviewer",
+        "evidence": "RECOMMENDATION: APPROVE; agent 019eb92d-bcb1-7b10-adcc-7660db1b5f3e"
+      },
+      "architect": {
+        "agentRole": "architect",
+        "evidence": "Architectural Status: CLEAR; agent 019eb92d-f527-7830-935d-297faf8f45cf"
+      }
+    }
+  }
+}
