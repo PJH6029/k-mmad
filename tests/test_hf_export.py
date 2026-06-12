@@ -742,6 +742,70 @@ class HfExportTest(unittest.TestCase):
                 self.assertTrue(any(expected_error in error for error in validation["errors"]))
                 self.assertTrue(any("unexpected top-level package artifact" in error for error in validation["errors"]))
 
+    def test_self_contained_validation_rejects_malformed_split_entries(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            cases = (
+                ("non-object-split", {"test": 1}, "manifest split entry is not an object"),
+                ("missing-num-rows", {"test": {}}, "manifest split num_rows missing or invalid"),
+                ("negative-num-rows", {"test": {"num_rows": -1}}, "manifest split num_rows missing or invalid"),
+                ("bool-num-rows", {"test": {"num_rows": True}}, "manifest split num_rows missing or invalid"),
+            )
+            for name, splits, expected_error in cases:
+                package = root / name
+                package.mkdir()
+                (package / "README.md").write_text("# malformed package", encoding="utf-8")
+                (package / "hf_package_manifest.json").write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "dataset_name": name,
+                            "layout": "huggingface_imagefolder_self_contained",
+                            "splits": splits,
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                (package / "test").mkdir()
+
+                validation = validate_self_contained_package(package)
+                self.assertEqual(validation["status"], "failed")
+                self.assertTrue(any(expected_error in error for error in validation["errors"]))
+
+    def test_self_contained_validation_reports_root_artifact_directories(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+
+            manifest_dir_package = root / "manifest-dir"
+            manifest_dir_package.mkdir()
+            (manifest_dir_package / "README.md").write_text("# malformed package", encoding="utf-8")
+            (manifest_dir_package / "hf_package_manifest.json").mkdir()
+            validation = validate_self_contained_package(manifest_dir_package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("self-contained manifest is not a file" in error for error in validation["errors"]))
+
+            card_dir_package = root / "card-dir"
+            card_dir_package.mkdir()
+            (card_dir_package / "README.md").mkdir()
+            (card_dir_package / "hf_package_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "dataset_name": "card-dir",
+                        "layout": "huggingface_imagefolder_self_contained",
+                        "splits": {},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            validation = validate_self_contained_package(card_dir_package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("dataset card is not a file" in error for error in validation["errors"]))
+
     def test_self_contained_validation_rejects_media_path_traversal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

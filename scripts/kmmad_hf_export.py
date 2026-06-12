@@ -1124,9 +1124,13 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
     manifest_loaded = False
     if not manifest_path.exists():
         errors.append(f"self-contained manifest missing: {manifest_path}")
+    elif not manifest_path.is_file():
+        errors.append(f"self-contained manifest is not a file: {manifest_path}")
     else:
         try:
             parsed_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except OSError as exc:
+            errors.append(f"self-contained manifest is not readable: {exc}")
         except json.JSONDecodeError as exc:
             errors.append(f"self-contained manifest is not valid JSON: {exc}")
         else:
@@ -1137,6 +1141,8 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
                 errors.append("self-contained manifest is not a JSON object")
     if not card_path.exists():
         errors.append(f"dataset card missing: {card_path}")
+    elif not card_path.is_file():
+        errors.append(f"dataset card is not a file: {card_path}")
     split_counts: dict[str, int] = {}
     columns: set[str] = set()
     record_ids: dict[str, str] = {}
@@ -1155,7 +1161,14 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             elif child.is_file() and child.name not in PACKAGE_ROOT_FILES:
                 errors.append(f"unexpected top-level file for split artifact: {child.name}")
     for split, split_info in sorted(manifest_splits.items()):
-        expected_count = int(split_info.get("num_rows", -1)) if isinstance(split_info, dict) else -1
+        if not isinstance(split_info, dict):
+            errors.append(f"manifest split entry is not an object: {split}")
+            continue
+        raw_num_rows = split_info.get("num_rows")
+        if not isinstance(raw_num_rows, int) or isinstance(raw_num_rows, bool) or raw_num_rows < 0:
+            errors.append(f"manifest split num_rows missing or invalid: {split}")
+            continue
+        expected_count = raw_num_rows
         try:
             rows = read_split_metadata(output_dir, str(split))
         except (OSError, json.JSONDecodeError, ValueError) as exc:
@@ -1210,10 +1223,14 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
     if manifest_path.exists():
         add_secret_errors(errors, "manifest", manifest)
         add_forbidden_process_errors(errors, "manifest", manifest)
-    if card_path.exists():
-        card_text = card_path.read_text(encoding="utf-8")
-        add_secret_errors(errors, "card", card_text)
-        add_forbidden_process_errors(errors, "card", card_text)
+    if card_path.is_file():
+        try:
+            card_text = card_path.read_text(encoding="utf-8")
+        except OSError as exc:
+            errors.append(f"dataset card is not readable: {exc}")
+        else:
+            add_secret_errors(errors, "card", card_text)
+            add_forbidden_process_errors(errors, "card", card_text)
     if manifest_splits and not errors:
         try:
             datasets = import_datasets_module()
