@@ -64,6 +64,7 @@ TEXT_FIELD_ALIASES = {
     "instruction": ("instruction", "instructions", "visual_prompt", "prompt_instruction", "context", "lecture"),
 }
 SAFE_SPLIT_RE = re.compile(r"[^A-Za-z0-9_]+")
+SAFE_PACKAGE_SPLIT_NAME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
 URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
 EXTRA_MEDIA_KEYS = (
     "template_image",
@@ -140,6 +141,66 @@ PROCESS_PATH_MARKERS = (
     "WANDB_API_KEY",
     "translation_artifact_path",
 )
+FORBIDDEN_CLEAN_MANIFEST_KEYS = {
+    "api_key",
+    "base_url",
+    "cluster",
+    "codex_home",
+    "commit",
+    "docker_image",
+    "endpoint",
+    "git_sha",
+    "image_digest",
+    "mlxp",
+    "model",
+    "model_id",
+    "namespace",
+    "openai_api_key",
+    "pod",
+    "provider",
+    "provider_id",
+    "repo",
+    "repository",
+    "reservation",
+    "reservation_id",
+    "run_id",
+    "secret",
+    "source_record_json",
+    "token",
+    "translation_artifact_path",
+    "translation_run_id",
+}
+CLEAN_MANIFEST_TOP_LEVEL_KEYS = {
+    "schema_version",
+    "created_at",
+    "dataset_name",
+    "layout",
+    "source",
+    "translation",
+    "media_packaging",
+    "export",
+    "splits",
+    "columns",
+}
+CLEAN_MANIFEST_SOURCE_KEYS = {
+    "original_hf_dataset",
+    "original_hf_config",
+    "original_hf_revision",
+}
+CLEAN_MANIFEST_TRANSLATION_KEYS = {"qc_status"}
+CLEAN_MANIFEST_MEDIA_PACKAGING_KEYS = {
+    "mode",
+    "copied_files",
+    "missing_media_refs",
+    "allow_missing_media",
+}
+CLEAN_MANIFEST_EXPORT_KEYS = {
+    "output_dir",
+    "dataset_card",
+    "hub_upload_performed",
+    "load_dataset_command",
+}
+CLEAN_MANIFEST_SPLIT_KEYS = {"num_rows", "metadata", "images_dir"}
 VISUALIZER_HTML = """<!doctype html>
 <html lang="en">
 <head>
@@ -544,6 +605,20 @@ def safe_label_part(value: str) -> str:
     return label or "input"
 
 
+def is_safe_package_split_name(value: Any) -> bool:
+    split = str(value)
+    if not split or split in {".", ".."}:
+        return False
+    if "/" in split or "\\" in split:
+        return False
+    split_path = Path(split)
+    if split_path.is_absolute():
+        return False
+    if any(part in {".", ".."} for part in split_path.parts):
+        return False
+    return bool(SAFE_PACKAGE_SPLIT_NAME_RE.fullmatch(split))
+
+
 def build_input_root_labels(roots: Iterable[Path]) -> dict[Path, str]:
     labels: dict[Path, str] = {}
     for idx, root in enumerate(roots):
@@ -822,7 +897,7 @@ This is a self-contained Korean VQA translation package in Hugging Face ImageFol
 - Each split directory contains `metadata.jsonl`.
 - Image files are stored under `<split>/images/...`.
 - The `file_name` column points to the primary image for Hub/Dataset Viewer compatibility.
-- The `media_files` column contains all packaged media paths relative to the repository root.
+- The `media_files` column contains all packaged media paths relative to the package root.
 
 ## Splits
 
@@ -849,17 +924,28 @@ ds = load_dataset("imagefolder", data_dir=".")
 
 def write_visualizer(visualizer_dir: Path, *, package_dir: Path, records: list[dict[str, Any]]) -> None:
     visualizer_dir.mkdir(parents=True, exist_ok=True)
+    package_root = package_dir.resolve()
+    visualizer_root = visualizer_dir.resolve()
+    media_root = visualizer_dir / "media"
+    if media_root.exists():
+        if media_root.is_dir() and not media_root.is_symlink():
+            shutil.rmtree(media_root)
+        else:
+            media_root.unlink()
     viewer_records: list[dict[str, Any]] = []
     for record in records:
         media_paths: list[str] = []
         for media_file in record.get("media_files", []):
-            source = package_dir / str(media_file)
+            source = (package_dir / str(media_file)).resolve()
             target_rel = Path("media") / str(media_file)
-            target = visualizer_dir / target_rel
+            target = (visualizer_dir / target_rel).resolve()
+            if not _is_relative_to(source, package_root):
+                raise ValueError(f"visualizer media source escapes package root: {media_file}")
+            if not _is_relative_to(target, visualizer_root):
+                raise ValueError(f"visualizer media target escapes visualizer root: {media_file}")
             if source.exists():
                 target.parent.mkdir(parents=True, exist_ok=True)
-                if not target.exists():
-                    shutil.copy2(source, target)
+                shutil.copy2(source, target)
             media_paths.append(target_rel.as_posix())
         viewer_records.append({
             "record_id": record["record_id"],
@@ -1109,6 +1195,63 @@ def add_forbidden_process_errors(errors: list[str], label: str, value: Any) -> N
             errors.append(f"process-only marker found in clean package: {label}: {marker}")
 
 
+def add_forbidden_manifest_key_errors(errors: list[str], label: str, value: Any) -> None:
+    if isinstance(value, dict):
+        for raw_key, nested in value.items():
+            key = str(raw_key)
+            child_label = f"{label}.{key}"
+            if key.lower() in FORBIDDEN_CLEAN_MANIFEST_KEYS:
+                errors.append(f"process-only manifest key found in clean package: {child_label}")
+            add_forbidden_manifest_key_errors(errors, child_label, nested)
+    elif isinstance(value, list):
+        for idx, nested in enumerate(value):
+            add_forbidden_manifest_key_errors(errors, f"{label}[{idx}]", nested)
+
+
+def add_unexpected_manifest_keys(
+    errors: list[str],
+    label: str,
+    section: Any,
+    allowed_keys: set[str],
+) -> None:
+    if not isinstance(section, dict):
+        errors.append(f"manifest section is not an object: {label}")
+        return
+    for key in sorted(set(str(item) for item in section) - allowed_keys):
+        errors.append(f"unexpected clean manifest key: {label}.{key}")
+
+
+def validate_clean_manifest_schema(errors: list[str], manifest: dict[str, Any]) -> None:
+    add_forbidden_manifest_key_errors(errors, "manifest", manifest)
+    add_unexpected_manifest_keys(errors, "manifest", manifest, CLEAN_MANIFEST_TOP_LEVEL_KEYS)
+    for section_name, allowed_keys in (
+        ("source", CLEAN_MANIFEST_SOURCE_KEYS),
+        ("translation", CLEAN_MANIFEST_TRANSLATION_KEYS),
+        ("media_packaging", CLEAN_MANIFEST_MEDIA_PACKAGING_KEYS),
+        ("export", CLEAN_MANIFEST_EXPORT_KEYS),
+    ):
+        if section_name in manifest:
+            add_unexpected_manifest_keys(errors, f"manifest.{section_name}", manifest[section_name], allowed_keys)
+    columns = manifest.get("columns")
+    if columns is not None:
+        if not isinstance(columns, list) or any(not isinstance(item, str) for item in columns):
+            errors.append("manifest columns missing or invalid")
+        else:
+            for column in sorted(set(columns) - CLEAN_PACKAGE_COLUMNS):
+                errors.append(f"unexpected clean manifest column: manifest.columns.{column}")
+    raw_splits = manifest.get("splits")
+    if isinstance(raw_splits, dict):
+        for split, split_info in raw_splits.items():
+            split_label = str(split)
+            if isinstance(split_info, dict):
+                add_unexpected_manifest_keys(
+                    errors,
+                    f"manifest.splits.{split_label}",
+                    split_info,
+                    CLEAN_MANIFEST_SPLIT_KEYS,
+                )
+
+
 def read_split_metadata(package_dir: Path, split: str) -> list[dict[str, Any]]:
     metadata_path = package_dir / split / "metadata.jsonl"
     if not metadata_path.exists():
@@ -1131,12 +1274,15 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             parsed_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except OSError as exc:
             errors.append(f"self-contained manifest is not readable: {exc}")
+        except UnicodeDecodeError as exc:
+            errors.append(f"self-contained manifest is not UTF-8 decodable: {exc}")
         except json.JSONDecodeError as exc:
             errors.append(f"self-contained manifest is not valid JSON: {exc}")
         else:
             manifest_loaded = True
             if isinstance(parsed_manifest, dict):
                 manifest = parsed_manifest
+                validate_clean_manifest_schema(errors, manifest)
             else:
                 errors.append("self-contained manifest is not a JSON object")
     if not card_path.exists():
@@ -1153,7 +1299,8 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             errors.append("manifest splits missing or invalid")
         elif not manifest_splits:
             errors.append("manifest splits is empty")
-    expected_top_level = PACKAGE_ROOT_FILES | {str(split) for split in manifest_splits}
+    safe_manifest_split_names = {str(split) for split in manifest_splits if is_safe_package_split_name(split)}
+    expected_top_level = PACKAGE_ROOT_FILES | safe_manifest_split_names
     if output_dir.exists() and manifest_loaded:
         for child in output_dir.iterdir():
             if child.name not in expected_top_level:
@@ -1161,6 +1308,10 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             elif child.is_file() and child.name not in PACKAGE_ROOT_FILES:
                 errors.append(f"unexpected top-level file for split artifact: {child.name}")
     for split, split_info in sorted(manifest_splits.items()):
+        split_name = str(split)
+        if not is_safe_package_split_name(split_name):
+            errors.append(f"manifest split name is unsafe: {split_name}")
+            continue
         if not isinstance(split_info, dict):
             errors.append(f"manifest split entry is not an object: {split}")
             continue
@@ -1170,15 +1321,15 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             continue
         expected_count = raw_num_rows
         try:
-            rows = read_split_metadata(output_dir, str(split))
+            rows = read_split_metadata(output_dir, split_name)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             errors.append(str(exc))
             continue
-        split_counts[str(split)] = len(rows)
+        split_counts[split_name] = len(rows)
         if expected_count >= 0 and len(rows) != expected_count:
             errors.append(f"split metadata count mismatch for {split}: jsonl={len(rows)} manifest={expected_count}")
         for idx, row in enumerate(rows):
-            label = f"{split}/metadata.jsonl[{idx}]"
+            label = f"{split_name}/metadata.jsonl[{idx}]"
             columns.update(str(key) for key in row)
             add_secret_errors(errors, label, row)
             add_forbidden_process_errors(errors, label, row)
@@ -1194,7 +1345,7 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             missing_columns = SELF_CONTAINED_REQUIRED_COLUMNS - set(row)
             errors.extend(f"required clean column missing: {label}.{column}" for column in sorted(missing_columns))
             file_name = str(row.get("file_name") or "")
-            split_root = (output_dir / str(split)).resolve()
+            split_root = (output_dir / split_name).resolve()
             if not file_name:
                 errors.append(f"primary image file_name missing: {label}")
             elif Path(file_name).is_absolute() or is_remote_ref(file_name):
@@ -1228,6 +1379,8 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             card_text = card_path.read_text(encoding="utf-8")
         except OSError as exc:
             errors.append(f"dataset card is not readable: {exc}")
+        except UnicodeDecodeError as exc:
+            errors.append(f"dataset card is not UTF-8 decodable: {exc}")
         else:
             add_secret_errors(errors, "card", card_text)
             add_forbidden_process_errors(errors, "card", card_text)

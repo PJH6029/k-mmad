@@ -29,6 +29,9 @@ from kmmad_translate_smoke import main as translate_main  # noqa: E402
 PNG_1X1 = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
 )
+PNG_1X1_RED = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
+)
 
 
 class HfExportTest(unittest.TestCase):
@@ -520,6 +523,76 @@ class HfExportTest(unittest.TestCase):
             self.assertEqual(self.fetch_from_static_dir(visualizer_dir, media_url), 200)
             self.assertIn("side-by-side", (visualizer_dir / "index.html").read_text(encoding="utf-8"))
 
+    def test_self_contained_visualizer_refreshes_media_on_rerun(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            source_image = media_root / "images" / "sample.png"
+            source_image.write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {"id": "rerun-row", "image_path": "images/sample.png", "question": "Question"},
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            visualizer_dir = root / "visualizer"
+
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=root / "package-a",
+                dataset_name="k-rerun-a",
+                original_hf_dataset="fixture/rerun",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+                visualizer_dir=visualizer_dir,
+            )
+            media_url = json.loads((visualizer_dir / "viewer_data.json").read_text(encoding="utf-8"))["records"][0]["media"][0]
+            self.assertEqual((visualizer_dir / media_url).read_bytes(), PNG_1X1)
+
+            source_image.write_bytes(PNG_1X1_RED)
+            stale_extra = visualizer_dir / "media" / "stale.png"
+            stale_extra.write_bytes(PNG_1X1)
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=root / "package-b",
+                dataset_name="k-rerun-b",
+                original_hf_dataset="fixture/rerun",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+                visualizer_dir=visualizer_dir,
+            )
+
+            media_url = json.loads((visualizer_dir / "viewer_data.json").read_text(encoding="utf-8"))["records"][0]["media"][0]
+            self.assertEqual((visualizer_dir / media_url).read_bytes(), PNG_1X1_RED)
+            self.assertFalse(stale_extra.exists())
+
     def test_self_contained_package_rejects_missing_media_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -774,6 +847,104 @@ class HfExportTest(unittest.TestCase):
                 self.assertEqual(validation["status"], "failed")
                 self.assertTrue(any(expected_error in error for error in validation["errors"]))
 
+    def test_self_contained_validation_rejects_unsafe_manifest_split_names(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package = root / "package"
+            escape = root / "escape"
+            package.mkdir()
+            escape.mkdir()
+            (package / "README.md").write_text("# malformed package", encoding="utf-8")
+            (escape / "metadata.jsonl").write_text(
+                json.dumps(
+                    {
+                        "record_id": "outside",
+                        "benchmark_id": "mmad",
+                        "source_id": "outside",
+                        "split": "../escape",
+                        "file_name": "images/outside.png",
+                        "media_files": ["../escape/images/outside.png"],
+                        "question_original": "Question",
+                        "question_ko": "질문",
+                        "translation_qc_status": "passed",
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (package / "hf_package_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "dataset_name": "unsafe-split",
+                        "layout": "huggingface_imagefolder_self_contained",
+                        "splits": {"../escape": {"num_rows": 1}},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            validation = validate_self_contained_package(package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("manifest split name is unsafe" in error for error in validation["errors"]))
+            self.assertEqual(validation["splits"], {})
+
+    def test_self_contained_validation_rejects_manifest_process_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {"id": "row", "image_path": "images/sample.png", "question": "Question"},
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-manifest-process",
+                original_hf_dataset="fixture/process",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+            manifest_path = export_dir / "hf_package_manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["provider"] = "openai"
+            manifest["reservation"] = {"pod": "production-storage-shell-1"}
+            manifest["columns"].append("provider")
+            manifest["splits"]["test"]["provider"] = "endpoint"
+            manifest_path.write_text(json.dumps(manifest, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            validation = validate_self_contained_package(export_dir)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("process-only manifest key found" in error for error in validation["errors"]))
+            self.assertTrue(any("unexpected clean manifest key: manifest.provider" in error for error in validation["errors"]))
+            self.assertTrue(any("unexpected clean manifest column" in error for error in validation["errors"]))
+            self.assertTrue(any("unexpected clean manifest key: manifest.splits.test.provider" in error for error in validation["errors"]))
+
     def test_self_contained_validation_reports_root_artifact_directories(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -805,6 +976,38 @@ class HfExportTest(unittest.TestCase):
             validation = validate_self_contained_package(card_dir_package)
             self.assertEqual(validation["status"], "failed")
             self.assertTrue(any("dataset card is not a file" in error for error in validation["errors"]))
+
+    def test_self_contained_validation_reports_non_utf8_root_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+
+            manifest_bytes_package = root / "manifest-bytes"
+            manifest_bytes_package.mkdir()
+            (manifest_bytes_package / "README.md").write_text("# malformed package", encoding="utf-8")
+            (manifest_bytes_package / "hf_package_manifest.json").write_bytes(b"\xff")
+            validation = validate_self_contained_package(manifest_bytes_package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("self-contained manifest is not UTF-8 decodable" in error for error in validation["errors"]))
+
+            card_bytes_package = root / "card-bytes"
+            card_bytes_package.mkdir()
+            (card_bytes_package / "README.md").write_bytes(b"\xff")
+            (card_bytes_package / "hf_package_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "dataset_name": "card-bytes",
+                        "layout": "huggingface_imagefolder_self_contained",
+                        "splits": {},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            validation = validate_self_contained_package(card_bytes_package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("dataset card is not UTF-8 decodable" in error for error in validation["errors"]))
 
     def test_self_contained_validation_rejects_media_path_traversal(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
