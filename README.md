@@ -49,7 +49,7 @@ uv run python scripts/kmmad_hf_export.py \
 uv run python scripts/kmmad_hf_export.py --validate-only /path/to/hf-upload/k-mmad-ko
 ```
 
-The clean package root contains only dataset artifacts such as `README.md`, `hf_package_manifest.json`, and `<split>/metadata.jsonl` plus `<split>/images/...`. Rows include the primary `file_name` column for Hub/Dataset Viewer compatibility and `media_files` for all packaged media. Process-only fields such as run-record paths, MLXP paths, provider details, translation artifact paths, and source run IDs are omitted.
+The clean package root contains only dataset artifacts such as `README.md`, `hf_package_manifest.json`, `hf_package_validation.json`, and `<split>/metadata.jsonl` plus `<split>/images/...`. Rows include the primary `file_name` column for Hub/Dataset Viewer compatibility and `media_files` for all packaged media. Process-only fields such as run-record paths, MLXP paths, provider details, translation artifact paths, and source run IDs are omitted. Media is copied only from explicit `--media-root` directories.
 
 Open the optional visualizer with a static server:
 
@@ -58,3 +58,5 @@ python -m http.server 8000 -d /path/to/viewer/k-mmad-ko
 ```
 
 Then visit <http://localhost:8000/> to compare images, questions, options, captions, and instructions side-by-side as original → Korean.
+
+The visualizer is a sibling artifact, not part of the uploadable dataset root. It copies the packaged media it needs under its own `media/` directory so the command above can serve images directly.

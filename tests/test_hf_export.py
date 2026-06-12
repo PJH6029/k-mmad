@@ -2,10 +2,15 @@ from __future__ import annotations
 
 import importlib
 import base64
+import contextlib
+import functools
+import http.server
 import json
 import sys
 import tempfile
+import threading
 import unittest
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -27,6 +32,24 @@ PNG_1X1 = base64.b64decode(
 
 
 class HfExportTest(unittest.TestCase):
+    def fetch_from_static_dir(self, directory: Path, relative_url: str) -> int:
+        class QuietHandler(http.server.SimpleHTTPRequestHandler):
+            def log_message(self, format: str, *args: object) -> None:  # noqa: A002 - stdlib signature.
+                return
+
+        handler = functools.partial(QuietHandler, directory=str(directory))
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            url = f"http://127.0.0.1:{server.server_port}/{relative_url}"
+            with contextlib.closing(urllib.request.urlopen(url, timeout=5)) as response:
+                return int(response.status)
+        finally:
+            server.shutdown()
+            thread.join(timeout=5)
+            server.server_close()
+
     def test_general_vqa_translation_bundle_exports_to_loadable_hf_dataset(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -490,7 +513,10 @@ class HfExportTest(unittest.TestCase):
 
             viewer_data = json.loads((visualizer_dir / "viewer_data.json").read_text(encoding="utf-8"))
             self.assertEqual(viewer_data["records"][0]["question_original"], "Which defect is visible?")
-            self.assertIn("../clean-package/test/images/mmad/", viewer_data["records"][0]["media"][0])
+            media_url = viewer_data["records"][0]["media"][0]
+            self.assertIn("media/test/images/mmad/", media_url)
+            self.assertTrue((visualizer_dir / media_url).exists())
+            self.assertEqual(self.fetch_from_static_dir(visualizer_dir, media_url), 200)
             self.assertIn("side-by-side", (visualizer_dir / "index.html").read_text(encoding="utf-8"))
 
     def test_self_contained_package_rejects_missing_media_by_default(self) -> None:
@@ -534,6 +560,141 @@ class HfExportTest(unittest.TestCase):
                     self_contained_package=True,
                     media_roots=[root / "media"],
                 )
+
+    def test_self_contained_package_rejects_absolute_media_outside_media_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / "outside.png"
+            outside.write_bytes(PNG_1X1)
+            allowed_root = root / "allowed"
+            allowed_root.mkdir()
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {
+                            "id": "absolute-outside",
+                            "image_path": str(outside),
+                            "question": "Question",
+                            "answer": "A",
+                        },
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "missing media references"):
+                export_translations(
+                    translation_outputs=[translations],
+                    output_dir=root / "clean-package",
+                    dataset_name="k-absolute-outside",
+                    original_hf_dataset="fixture/absolute",
+                    original_hf_config=None,
+                    original_hf_revision=None,
+                    default_split="test",
+                    fallback_benchmark_id="mmad",
+                    translation_run_id=None,
+                    translation_qc_status="passed",
+                    translation_qc_report=None,
+                    hub_repo_id=None,
+                    skip_translation_validation=True,
+                    self_contained_package=True,
+                    media_roots=[allowed_root],
+                )
+            self.assertFalse(list((root / "clean-package").rglob("outside.png")))
+
+    def test_self_contained_package_rejects_visualizer_inside_package_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {"id": "row", "image_path": "images/sample.png", "question": "Question"},
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+
+            with self.assertRaisesRegex(ValueError, "visualizer_dir must be separate"):
+                export_translations(
+                    translation_outputs=[translations],
+                    output_dir=export_dir,
+                    dataset_name="k-bad-visualizer",
+                    original_hf_dataset="fixture/visualizer",
+                    original_hf_config=None,
+                    original_hf_revision=None,
+                    default_split="test",
+                    fallback_benchmark_id="mmad",
+                    translation_run_id=None,
+                    translation_qc_status="passed",
+                    translation_qc_report=None,
+                    hub_repo_id=None,
+                    skip_translation_validation=True,
+                    self_contained_package=True,
+                    media_roots=[media_root],
+                    visualizer_dir=export_dir / "viewer",
+                )
+
+    def test_self_contained_validation_rejects_unexpected_clean_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {"id": "row", "image_path": "images/sample.png", "question": "Question"},
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-extra-column",
+                original_hf_dataset="fixture/extra",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+            metadata = export_dir / "test" / "metadata.jsonl"
+            row = json.loads(metadata.read_text(encoding="utf-8").splitlines()[0])
+            row["provider"] = "should be rejected"
+            metadata.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            validation = validate_self_contained_package(export_dir)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("unexpected clean package column" in error for error in validation["errors"]))
 
     def test_self_contained_package_resolves_media_inside_named_zip_archives(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

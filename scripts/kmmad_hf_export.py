@@ -15,7 +15,6 @@ import ast
 import hashlib
 import importlib
 import json
-import os
 import re
 import shutil
 import zipfile
@@ -88,6 +87,38 @@ SELF_CONTAINED_REQUIRED_COLUMNS = {
     "question_original",
     "question_ko",
     "translation_qc_status",
+}
+CLEAN_PACKAGE_COLUMNS = {
+    "record_id",
+    "dataset_name",
+    "benchmark_id",
+    "benchmark_name",
+    "source_id",
+    "split",
+    "task",
+    "file_name",
+    "media_files",
+    "primary_media_file",
+    "media_original_refs_json",
+    "question_original",
+    "options_original_json",
+    "caption_original",
+    "instruction_original",
+    "question_ko",
+    "options_ko_json",
+    "caption_ko",
+    "instruction_ko",
+    "answer",
+    "preserve_fields_json",
+    "skip_fields_json",
+    "translation_scope",
+    "translation_qc_status",
+    "export_schema_version",
+}
+PACKAGE_ROOT_FILES = {
+    DATASET_CARD_FILENAME,
+    SELF_CONTAINED_MANIFEST_FILENAME,
+    SELF_CONTAINED_VALIDATION_FILENAME,
 }
 PROCESS_ONLY_COLUMNS = {
     "translation_artifact_path",
@@ -550,6 +581,18 @@ def assert_output_dir_safe(output_dir: Path) -> None:
         )
 
 
+def assert_visualizer_dir_disjoint(output_dir: Path, visualizer_dir: Path | None) -> None:
+    if visualizer_dir is None:
+        return
+    package_root = output_dir.resolve()
+    viewer_root = visualizer_dir.resolve()
+    if _is_relative_to(viewer_root, package_root) or _is_relative_to(package_root, viewer_root):
+        raise ValueError(
+            "visualizer_dir must be separate from the self-contained package root; "
+            "write the viewer as a sibling artifact, not inside or above the upload package"
+        )
+
+
 def group_by_split(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     splits: dict[str, list[dict[str, Any]]] = {}
     for record in records:
@@ -589,20 +632,30 @@ def resolve_media_path(media_ref: str, media_roots: Iterable[Path]) -> Path | No
         return None
     ref_path = Path(media_ref)
     candidates: list[Path] = []
+    roots = [root.resolve() for root in media_roots]
     if ref_path.is_absolute():
-        candidates.append(ref_path)
-    for root in media_roots:
-        root_resolved = root.resolve()
+        resolved_ref = ref_path.resolve()
+        if any(_is_relative_to(resolved_ref, root) for root in roots):
+            candidates.append(resolved_ref)
+        else:
+            return None
+    for root_resolved in roots:
         candidate = (root_resolved / media_ref).resolve()
-        try:
-            candidate.relative_to(root_resolved)
-        except ValueError:
+        if not _is_relative_to(candidate, root_resolved):
             continue
         candidates.append(candidate)
     for candidate in candidates:
         if candidate.is_file():
             return candidate
     return None
+
+
+def _is_relative_to(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return False
+    return True
 
 
 def candidate_zip_files(media_ref: str, media_roots: Iterable[Path]) -> list[Path]:
@@ -798,10 +851,16 @@ def write_visualizer(visualizer_dir: Path, *, package_dir: Path, records: list[d
     visualizer_dir.mkdir(parents=True, exist_ok=True)
     viewer_records: list[dict[str, Any]] = []
     for record in records:
-        media_paths = [
-            os.path.relpath(package_dir / media_file, visualizer_dir).replace(os.sep, "/")
-            for media_file in record.get("media_files", [])
-        ]
+        media_paths: list[str] = []
+        for media_file in record.get("media_files", []):
+            source = package_dir / str(media_file)
+            target_rel = Path("media") / str(media_file)
+            target = visualizer_dir / target_rel
+            if source.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if not target.exists():
+                    shutil.copy2(source, target)
+            media_paths.append(target_rel.as_posix())
         viewer_records.append({
             "record_id": record["record_id"],
             "benchmark_id": record["benchmark_id"],
@@ -826,7 +885,7 @@ def write_visualizer(visualizer_dir: Path, *, package_dir: Path, records: list[d
         "# K-MMAD translation visualizer\n\n"
         "Serve this directory with a local static server, for example:\n\n"
         "```bash\npython -m http.server 8000 -d /path/to/visualizer\n```\n\n"
-        "Then open http://localhost:8000/.\n",
+        "Then open http://localhost:8000/. The viewer contains its own media copy and is not part of the uploadable HF package.\n",
         encoding="utf-8",
     )
 
@@ -1075,6 +1134,13 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
     columns: set[str] = set()
     record_ids: dict[str, str] = {}
     manifest_splits = manifest.get("splits", {}) if isinstance(manifest.get("splits"), dict) else {}
+    expected_top_level = PACKAGE_ROOT_FILES | {str(split) for split in manifest_splits}
+    if output_dir.exists() and manifest_splits:
+        for child in output_dir.iterdir():
+            if child.name not in expected_top_level:
+                errors.append(f"unexpected top-level package artifact: {child.name}")
+            elif child.is_file() and child.name not in PACKAGE_ROOT_FILES:
+                errors.append(f"unexpected top-level file for split artifact: {child.name}")
     for split, split_info in sorted(manifest_splits.items()):
         expected_count = int(split_info.get("num_rows", -1)) if isinstance(split_info, dict) else -1
         try:
@@ -1091,6 +1157,11 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             add_secret_errors(errors, label, row)
             add_forbidden_process_errors(errors, label, row)
             validate_record_ids(errors, record_ids, row.get("record_id"), label)
+            unexpected_columns = set(row) - CLEAN_PACKAGE_COLUMNS
+            errors.extend(
+                f"unexpected clean package column: {label}.{column}"
+                for column in sorted(unexpected_columns)
+            )
             for column in PROCESS_ONLY_COLUMNS:
                 if column in row:
                     errors.append(f"process-only column present in clean package: {label}.{column}")
@@ -1158,6 +1229,7 @@ def export_self_contained_package(
     allow_missing_media: bool,
 ) -> dict[str, Any]:
     del translation_run_id, translation_qc_report, hub_repo_id
+    assert_visualizer_dir_disjoint(output_dir, visualizer_dir)
     assert_output_dir_safe(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     exported_at = utc_now()
