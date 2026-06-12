@@ -1,17 +1,29 @@
 from __future__ import annotations
 
 import importlib
+import base64
 import json
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from kmmad_hf_export import export_translations, main as hf_export_main, validate_export  # noqa: E402
+from kmmad_hf_export import (  # noqa: E402
+    export_translations,
+    main as hf_export_main,
+    validate_export,
+    validate_self_contained_package,
+)
 from kmmad_translate_smoke import main as translate_main  # noqa: E402
+
+
+PNG_1X1 = base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII="
+)
 
 
 class HfExportTest(unittest.TestCase):
@@ -400,6 +412,178 @@ class HfExportTest(unittest.TestCase):
                 sorted(record["translation_artifact_path"] for record in records),
                 ["input-00-bundle/translation_smoke.jsonl", "input-01-bundle/translation_smoke.jsonl"],
             )
+
+    def test_self_contained_imagefolder_package_copies_media_and_omits_process_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {
+                            "id": "clean-row",
+                            "image_path": "images/sample.png",
+                            "question": "Which defect is visible?",
+                            "options": {"A": "scratch", "B": "dent"},
+                            "answer": "A",
+                        },
+                        "translated": {
+                            "question": "어떤 결함이 보이나요?",
+                            "options": {"A": "긁힘", "B": "찌그러짐"},
+                        },
+                        "translation_scope": ["question", "options"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            export_dir = root / "clean-package"
+            visualizer_dir = root / "visualizer"
+            manifest = export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-clean-package",
+                original_hf_dataset="fixture/clean",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id="process-run-id-should-not-appear",
+                translation_qc_status="passed",
+                translation_qc_report="process/qc.json",
+                hub_repo_id="pjh6029/k-clean-package",
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+                visualizer_dir=visualizer_dir,
+            )
+
+            self.assertEqual(manifest["validation"]["status"], "passed")
+            self.assertTrue((export_dir / "README.md").exists())
+            metadata_path = export_dir / "test" / "metadata.jsonl"
+            self.assertTrue(metadata_path.exists())
+            row = json.loads(metadata_path.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(row["question_ko"], "어떤 결함이 보이나요?")
+            self.assertNotIn("translation_artifact_path", row)
+            self.assertNotIn("translation_run_id", row)
+            self.assertNotIn("source_record_json", row)
+            self.assertTrue((export_dir / "test" / row["file_name"]).exists())
+            package_text = "\n".join(
+                path.read_text(encoding="utf-8")
+                for path in [export_dir / "README.md", export_dir / "hf_package_manifest.json", metadata_path]
+            )
+            self.assertNotIn("run_records", package_text)
+            self.assertNotIn("/mnt/ddn/", package_text)
+            self.assertNotIn("process-run-id-should-not-appear", package_text)
+            self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
+
+            datasets = importlib.import_module("datasets")
+            loaded = datasets.load_dataset("imagefolder", data_dir=str(export_dir))
+            self.assertEqual(len(loaded["test"]), 1)
+            self.assertIn("question_ko", loaded["test"].column_names)
+
+            viewer_data = json.loads((visualizer_dir / "viewer_data.json").read_text(encoding="utf-8"))
+            self.assertEqual(viewer_data["records"][0]["question_original"], "Which defect is visible?")
+            self.assertIn("../clean-package/test/images/mmad/", viewer_data["records"][0]["media"][0])
+            self.assertIn("side-by-side", (visualizer_dir / "index.html").read_text(encoding="utf-8"))
+
+    def test_self_contained_package_rejects_missing_media_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {
+                            "id": "missing-media",
+                            "image_path": "images/missing.png",
+                            "question": "Question",
+                            "answer": "A",
+                        },
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "missing media references"):
+                export_translations(
+                    translation_outputs=[translations],
+                    output_dir=root / "clean-package",
+                    dataset_name="k-missing-media",
+                    original_hf_dataset="fixture/missing",
+                    original_hf_config=None,
+                    original_hf_revision=None,
+                    default_split="test",
+                    fallback_benchmark_id="mmad",
+                    translation_run_id=None,
+                    translation_qc_status="passed",
+                    translation_qc_report=None,
+                    hub_repo_id=None,
+                    skip_translation_validation=True,
+                    self_contained_package=True,
+                    media_roots=[root / "media"],
+                )
+
+    def test_self_contained_package_resolves_media_inside_named_zip_archives(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "media"
+            media_root.mkdir()
+            with zipfile.ZipFile(media_root / "DS-MVTec.zip", "w") as zf:
+                zf.writestr("DS-MVTec/leather/image/poke/012.png", PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {
+                            "id": "zip-row",
+                            "query_image": "DS-MVTec/leather/image/poke/012.png",
+                            "question": "What defect is visible?",
+                            "answer": "A",
+                        },
+                        "translated": {"question": "어떤 결함이 보이나요?"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            export_dir = root / "zip-package"
+            manifest = export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-zip-media",
+                original_hf_dataset="fixture/zip",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+
+            self.assertEqual(manifest["validation"]["status"], "passed")
+            row = json.loads((export_dir / "test" / "metadata.jsonl").read_text(encoding="utf-8").splitlines()[0])
+            self.assertTrue((export_dir / "test" / row["file_name"]).exists())
 
     def test_validate_export_rejects_missing_required_bundle(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
