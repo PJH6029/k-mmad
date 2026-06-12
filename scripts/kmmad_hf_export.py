@@ -68,9 +68,6 @@ SAFE_SPLIT_RE = re.compile(r"[^A-Za-z0-9_]+")
 URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
 EXTRA_MEDIA_KEYS = (
     "template_image",
-    "mask",
-    "mask_path",
-    "rbg_mask",
     "random_template",
     "random_templates",
     "similar_template",
