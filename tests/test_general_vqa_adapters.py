@@ -291,6 +291,30 @@ class GeneralVqaAdapterTest(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertTrue(any("has no Korean text" in error for error in result["errors"]))
 
+    def test_nonlinguistic_validation_policy_is_benchmark_and_field_scoped(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "translation_smoke.jsonl"
+            report = Path(tmp) / "untranslated_fields.json"
+            row = {
+                "benchmark_id": "blink",
+                "source_id": "numeric-question",
+                "source": {"id": "numeric-question"},
+                "translated": {
+                    "text_fields": {
+                        "question": "17940 N",
+                        "options": "['17940 N', '38750 N']",
+                    }
+                },
+            }
+            output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            report.write_text("{}", encoding="utf-8")
+
+            result = validate_output(output, report)
+
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("text_fields.question" in error for error in result["errors"]))
+        self.assertTrue(any("text_fields.options" in error for error in result["errors"]))
+
 
 class OpenAiOauthAliasContractTest(unittest.TestCase):
     def test_endpoint_provider_openai_oauth_defaults_to_no_authorization(self) -> None:

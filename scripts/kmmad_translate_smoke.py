@@ -35,6 +35,11 @@ KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
+NONLINGUISTIC_FIELD_POLICY = {
+    # MMMU-Pro answer options often contain pure numbers, units, or formulas
+    # whose exact symbols must be preserved instead of forced into Hangul.
+    "mmmu_pro": {"text_fields.options", "options"},
+}
 BENCHMARK_ARTIFACT_FILES = (
     "translation_smoke.jsonl",
     "untranslated_fields.json",
@@ -333,18 +338,43 @@ def is_nonlinguistic_text(text: str) -> bool:
     return all(token in allowed_tokens for token in tokens)
 
 
-def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str]) -> None:
-    texts = flatten_text(value)
-    if not texts:
+def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [(field_path, value)] if value.strip() else []
+    if isinstance(value, (int, float, bool)):
+        return []
+    if isinstance(value, list):
+        items: list[tuple[str, str]] = []
+        for item in value:
+            items.extend(translated_text_items(item, field_path))
+        return items
+    if isinstance(value, dict):
+        items = []
+        for item_key, item_value in value.items():
+            items.extend(translated_text_items(item_value, f"{field_path}.{item_key}"))
+        return items
+    return [(field_path, str(value))]
+
+
+def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: str) -> bool:
+    allowed_fields = NONLINGUISTIC_FIELD_POLICY.get(benchmark_id, set())
+    return field_path in allowed_fields and is_nonlinguistic_text(text)
+
+
+def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str], *, benchmark_id: str = "") -> None:
+    items = translated_text_items(value, key)
+    if not items:
         errors.append(f"row {row_idx} translated field {key!r} is empty")
         return
-    for text_idx, text in enumerate(texts):
-        if not KOREAN_RE.search(text) and not is_nonlinguistic_text(text):
-            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} has no Korean text")
+    for text_idx, (field_path, text) in enumerate(items):
+        if not KOREAN_RE.search(text) and not allows_nonlinguistic_translation(benchmark_id, field_path, text):
+            errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} has no Korean text")
         if CJK_RE.search(text):
-            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} contains CJK/Hanja characters")
+            errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains CJK/Hanja characters")
         if ASSISTANT_ARTIFACT_RE.search(text):
-            errors.append(f"row {row_idx} translated field {key!r} item {text_idx} contains assistant artifact text")
+            errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains assistant artifact text")
 
 
 def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
@@ -412,8 +442,9 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
                     errors.append(f"row {idx} missing required translation scope: {required}")
             if "text_fields" in missing_scope:
                 errors.append(f"row {idx} has no configured text fields to translate")
+        benchmark_id = str(row.get("benchmark_id") or "")
         for key, value in translated.items():
-            validate_translated_value(idx, str(key), value, errors)
+            validate_translated_value(idx, str(key), value, errors, benchmark_id=benchmark_id)
         if "source" not in row:
             errors.append(f"row {idx} missing source field")
         if "benchmark_id" in row and not row.get("source_id"):
