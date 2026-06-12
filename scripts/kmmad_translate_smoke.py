@@ -270,13 +270,73 @@ def has_korean(value: Any) -> bool:
     return any(KOREAN_RE.search(text) for text in flatten_text(value))
 
 
+def is_nonlinguistic_text(text: str) -> bool:
+    """Return true for numeric/symbolic choices that do not need Hangul.
+
+    Some VQA benchmarks, especially MMMU-Pro, include answer options that are
+    pure numbers, percentages, physical units, or formula-like values. Requiring
+    Hangul in those strings is a false failure: there is no natural-language
+    content to translate, and changing units or numeric labels would be harmful.
+    English words still fail validation.
+    """
+
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if KOREAN_RE.search(stripped) or CJK_RE.search(stripped):
+        return False
+    if not any(char.isdigit() for char in stripped):
+        return False
+    tokens = re.findall(r"[A-Za-z]+", stripped)
+    if not tokens:
+        return True
+    allowed_tokens = {
+        # Multiple-choice labels and scientific/mathematical notation.
+        *(chr(code) for code in range(ord("A"), ord("Z") + 1)),
+        "x",
+        "X",
+        "e",
+        "E",
+        # Common units/symbols that should be preserved.
+        "m",
+        "cm",
+        "mm",
+        "km",
+        "kg",
+        "g",
+        "mg",
+        "s",
+        "ms",
+        "h",
+        "N",
+        "Pa",
+        "kPa",
+        "MPa",
+        "J",
+        "kJ",
+        "W",
+        "kW",
+        "MW",
+        "V",
+        "A",
+        "Hz",
+        "kHz",
+        "MHz",
+        "mol",
+        "L",
+        "mL",
+        "USD",
+    }
+    return all(token in allowed_tokens for token in tokens)
+
+
 def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str]) -> None:
     texts = flatten_text(value)
     if not texts:
         errors.append(f"row {row_idx} translated field {key!r} is empty")
         return
     for text_idx, text in enumerate(texts):
-        if not KOREAN_RE.search(text):
+        if not KOREAN_RE.search(text) and not is_nonlinguistic_text(text):
             errors.append(f"row {row_idx} translated field {key!r} item {text_idx} has no Korean text")
         if CJK_RE.search(text):
             errors.append(f"row {row_idx} translated field {key!r} item {text_idx} contains CJK/Hanja characters")

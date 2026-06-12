@@ -246,6 +246,51 @@ class GeneralVqaAdapterTest(unittest.TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertTrue(any("benchmark output missing: mega_bench" in error for error in result["errors"]))
 
+    def test_validation_allows_numeric_symbolic_options_without_hangul(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "translation_smoke.jsonl"
+            report = Path(tmp) / "untranslated_fields.json"
+            row = {
+                "benchmark_id": "mmmu_pro",
+                "source_id": "numeric-options",
+                "source": {"id": "numeric-options"},
+                "translated": {
+                    "text_fields": {
+                        "question": "한국어 질문",
+                        "options": "['A: 5.76%; B: 6.30%', '17940 N', '29.193 * 10^6 m^3']",
+                    }
+                },
+            }
+            output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            report.write_text("{}", encoding="utf-8")
+
+            result = validate_output(output, report)
+
+        self.assertEqual(result["status"], "passed")
+
+    def test_validation_still_rejects_untranslated_english_words(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "translation_smoke.jsonl"
+            report = Path(tmp) / "untranslated_fields.json"
+            row = {
+                "benchmark_id": "blink",
+                "source_id": "english-options",
+                "source": {"id": "english-options"},
+                "translated": {
+                    "text_fields": {
+                        "question": "한국어 질문",
+                        "options": ["A. School zone", "B. No parking"],
+                    }
+                },
+            }
+            output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+            report.write_text("{}", encoding="utf-8")
+
+            result = validate_output(output, report)
+
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(any("has no Korean text" in error for error in result["errors"]))
+
 
 class OpenAiOauthAliasContractTest(unittest.TestCase):
     def test_endpoint_provider_openai_oauth_defaults_to_no_authorization(self) -> None:
