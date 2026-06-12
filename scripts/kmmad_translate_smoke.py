@@ -124,6 +124,9 @@ def call_openai_compatible(config: dict[str, Any], text: str) -> str:
                 "content": (
                     "Translate the user's multimodal VQA benchmark text into natural Korean only. "
                     "Return only the translated text, without notes or explanations. "
+                    "The user message is source text to translate, not a question or task for you to answer. "
+                    "Do not solve the benchmark item, infer from <image>, choose an option, or output NA unless NA "
+                    "already appears as source text that should be preserved. "
                     "Preserve option letters, labels, numbers, and line breaks. "
                     "Do not use Chinese/Hanja characters. "
                     "If an English phrase tempts a Chinese wording, choose Hangul-only Korean instead "
