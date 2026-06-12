@@ -1121,27 +1121,34 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
     manifest_path = output_dir / SELF_CONTAINED_MANIFEST_FILENAME
     card_path = output_dir / DATASET_CARD_FILENAME
     manifest: dict[str, Any] = {}
+    manifest_loaded = False
     if not manifest_path.exists():
         errors.append(f"self-contained manifest missing: {manifest_path}")
     else:
         try:
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            parsed_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
             errors.append(f"self-contained manifest is not valid JSON: {exc}")
+        else:
+            manifest_loaded = True
+            if isinstance(parsed_manifest, dict):
+                manifest = parsed_manifest
+            else:
+                errors.append("self-contained manifest is not a JSON object")
     if not card_path.exists():
         errors.append(f"dataset card missing: {card_path}")
     split_counts: dict[str, int] = {}
     columns: set[str] = set()
     record_ids: dict[str, str] = {}
-    raw_manifest_splits = manifest.get("splits") if manifest else None
+    raw_manifest_splits = manifest.get("splits") if manifest_loaded else None
     manifest_splits = raw_manifest_splits if isinstance(raw_manifest_splits, dict) else {}
-    if manifest:
+    if manifest_loaded:
         if not isinstance(raw_manifest_splits, dict):
             errors.append("manifest splits missing or invalid")
         elif not manifest_splits:
             errors.append("manifest splits is empty")
     expected_top_level = PACKAGE_ROOT_FILES | {str(split) for split in manifest_splits}
-    if output_dir.exists() and manifest:
+    if output_dir.exists() and manifest_loaded:
         for child in output_dir.iterdir():
             if child.name not in expected_top_level:
                 errors.append(f"unexpected top-level package artifact: {child.name}")
@@ -1174,22 +1181,32 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
             missing_columns = SELF_CONTAINED_REQUIRED_COLUMNS - set(row)
             errors.extend(f"required clean column missing: {label}.{column}" for column in sorted(missing_columns))
             file_name = str(row.get("file_name") or "")
+            split_root = (output_dir / str(split)).resolve()
             if not file_name:
                 errors.append(f"primary image file_name missing: {label}")
             elif Path(file_name).is_absolute() or is_remote_ref(file_name):
                 errors.append(f"primary image file_name is not package-relative: {label}: {file_name}")
-            elif not (output_dir / str(split) / file_name).exists():
-                errors.append(f"primary image file missing: {label}: {file_name}")
+            else:
+                image_path = (split_root / file_name).resolve()
+                if not _is_relative_to(image_path, split_root):
+                    errors.append(f"primary image file escapes package split: {label}: {file_name}")
+                elif not image_path.exists():
+                    errors.append(f"primary image file missing: {label}: {file_name}")
             media_files = row.get("media_files")
             if not isinstance(media_files, list):
                 errors.append(f"media_files is not a list: {label}")
             else:
+                package_root = output_dir.resolve()
                 for media_file in media_files:
                     media_file_text = str(media_file)
                     if Path(media_file_text).is_absolute() or is_remote_ref(media_file_text):
                         errors.append(f"media file path is not package-relative: {label}: {media_file_text}")
-                    elif not (output_dir / media_file_text).exists():
-                        errors.append(f"packaged media file missing: {label}: {media_file_text}")
+                    else:
+                        media_path = (package_root / media_file_text).resolve()
+                        if not _is_relative_to(media_path, package_root):
+                            errors.append(f"media file escapes package root: {label}: {media_file_text}")
+                        elif not media_path.exists():
+                            errors.append(f"packaged media file missing: {label}: {media_file_text}")
     if manifest_path.exists():
         add_secret_errors(errors, "manifest", manifest)
         add_forbidden_process_errors(errors, "manifest", manifest)

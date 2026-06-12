@@ -721,6 +721,78 @@ class HfExportTest(unittest.TestCase):
             self.assertTrue(any("manifest splits is empty" in error for error in validation["errors"]))
             self.assertTrue(any("unexpected top-level package artifact" in error for error in validation["errors"]))
 
+    def test_self_contained_validation_rejects_empty_object_and_non_object_manifests(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for name, manifest_payload, expected_error in (
+                ("empty-object", {}, "manifest splits missing or invalid"),
+                ("non-object", [], "self-contained manifest is not a JSON object"),
+            ):
+                package = root / name
+                package.mkdir()
+                (package / "README.md").write_text("# malformed package", encoding="utf-8")
+                (package / "hf_package_manifest.json").write_text(
+                    json.dumps(manifest_payload, ensure_ascii=False) + "\n",
+                    encoding="utf-8",
+                )
+                (package / "run_records").mkdir()
+
+                validation = validate_self_contained_package(package)
+                self.assertEqual(validation["status"], "failed")
+                self.assertTrue(any(expected_error in error for error in validation["errors"]))
+                self.assertTrue(any("unexpected top-level package artifact" in error for error in validation["errors"]))
+
+    def test_self_contained_validation_rejects_media_path_traversal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "source": {"id": "row", "image_path": "images/sample.png", "question": "Question"},
+                        "translated": {"question": "질문"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-path-traversal",
+                original_hf_dataset="fixture/path-traversal",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+            outside = root / "outside.png"
+            outside.write_bytes(PNG_1X1)
+            metadata = export_dir / "test" / "metadata.jsonl"
+            row = json.loads(metadata.read_text(encoding="utf-8").splitlines()[0])
+            row["file_name"] = "../../outside.png"
+            row["media_files"] = ["../outside.png"]
+            metadata.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            validation = validate_self_contained_package(export_dir)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("primary image file escapes package split" in error for error in validation["errors"]))
+            self.assertTrue(any("media file escapes package root" in error for error in validation["errors"]))
+
     def test_self_contained_package_resolves_media_inside_named_zip_archives(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
