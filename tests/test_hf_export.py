@@ -44,6 +44,7 @@ class HfExportTest(unittest.TestCase):
         try:
             url = f"http://127.0.0.1:{server.server_port}/{relative_url}"
             with contextlib.closing(urllib.request.urlopen(url, timeout=5)) as response:
+                response.read()
                 return int(response.status)
         finally:
             server.shutdown()
