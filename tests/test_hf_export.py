@@ -697,6 +697,30 @@ class HfExportTest(unittest.TestCase):
             self.assertEqual(validation["status"], "failed")
             self.assertTrue(any("unexpected clean package column" in error for error in validation["errors"]))
 
+    def test_self_contained_validation_rejects_empty_splits_and_top_level_process_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            package = Path(tmp)
+            (package / "README.md").write_text("# malformed package", encoding="utf-8")
+            (package / "hf_package_manifest.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "dataset_name": "malformed",
+                        "layout": "huggingface_imagefolder_self_contained",
+                        "splits": {},
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (package / "run_records").mkdir()
+
+            validation = validate_self_contained_package(package)
+            self.assertEqual(validation["status"], "failed")
+            self.assertTrue(any("manifest splits is empty" in error for error in validation["errors"]))
+            self.assertTrue(any("unexpected top-level package artifact" in error for error in validation["errors"]))
+
     def test_self_contained_package_resolves_media_inside_named_zip_archives(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

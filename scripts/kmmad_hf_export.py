@@ -1133,9 +1133,15 @@ def validate_self_contained_package(output_dir: Path) -> dict[str, Any]:
     split_counts: dict[str, int] = {}
     columns: set[str] = set()
     record_ids: dict[str, str] = {}
-    manifest_splits = manifest.get("splits", {}) if isinstance(manifest.get("splits"), dict) else {}
+    raw_manifest_splits = manifest.get("splits") if manifest else None
+    manifest_splits = raw_manifest_splits if isinstance(raw_manifest_splits, dict) else {}
+    if manifest:
+        if not isinstance(raw_manifest_splits, dict):
+            errors.append("manifest splits missing or invalid")
+        elif not manifest_splits:
+            errors.append("manifest splits is empty")
     expected_top_level = PACKAGE_ROOT_FILES | {str(split) for split in manifest_splits}
-    if output_dir.exists() and manifest_splits:
+    if output_dir.exists() and manifest:
         for child in output_dir.iterdir():
             if child.name not in expected_top_level:
                 errors.append(f"unexpected top-level package artifact: {child.name}")
