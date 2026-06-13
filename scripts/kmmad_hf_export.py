@@ -66,6 +66,11 @@ TEXT_FIELD_ALIASES = {
 SAFE_SPLIT_RE = re.compile(r"[^A-Za-z0-9_]+")
 SAFE_PACKAGE_SPLIT_NAME_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*$")
 URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
+IMAGEFOLDER_SPLIT_ALIASES = {
+    "val": "validation",
+    "valid": "validation",
+    "dev": "validation",
+}
 EXTRA_MEDIA_KEYS = (
     "template_image",
     "random_template",
@@ -363,6 +368,19 @@ def normalize_split(value: Any, default_split: str) -> str:
     raw = str(value if value not in (None, "") else default_split).strip() or default_split
     normalized = SAFE_SPLIT_RE.sub("_", raw).strip("_").lower()
     return normalized or "test"
+
+
+def normalize_imagefolder_split(split: Any) -> str:
+    """Return the split name produced by Hugging Face ImageFolder.
+
+    ImageFolder canonicalizes common validation directory aliases such as
+    ``val`` to ``validation``.  Self-contained packages should write the same
+    canonical split name up front so manifests, metadata, and load-time split
+    names agree.
+    """
+
+    normalized = normalize_split(split, "test")
+    return IMAGEFOLDER_SPLIT_ALIASES.get(normalized, normalized)
 
 
 def first_non_empty(mapping: dict[str, Any], keys: Iterable[str]) -> tuple[str | None, Any]:
@@ -1454,6 +1472,12 @@ def export_self_contained_package(
                 translation_qc_report=None,
                 exported_at=exported_at,
             )
+            imagefolder_split = normalize_imagefolder_split(normalized["split"])
+            if imagefolder_split != normalized["split"]:
+                normalized["split"] = imagefolder_split
+                normalized["record_id"] = (
+                    f"{normalized['benchmark_id']}/{imagefolder_split}/{normalized['source_id']}"
+                )
             media_package = package_media_for_record(
                 record=normalized,
                 output_dir=output_dir,

@@ -523,6 +523,71 @@ class HfExportTest(unittest.TestCase):
             self.assertEqual(self.fetch_from_static_dir(visualizer_dir, media_url), 200)
             self.assertIn("side-by-side", (visualizer_dir / "index.html").read_text(encoding="utf-8"))
 
+    def test_self_contained_imagefolder_package_canonicalizes_val_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "benchmark_id": "blink",
+                        "split": "val",
+                        "source_id": "val-row",
+                        "source": {
+                            "source_record": {"split": "val", "image_path": "images/sample.png"},
+                            "image_path": "images/sample.png",
+                            "question": "Which artwork is closer?",
+                            "options": {"A": "left", "B": "right"},
+                            "answer": "A",
+                        },
+                        "translated": {
+                            "question": "어느 작품이 더 가까운가요?",
+                            "options": {"A": "왼쪽", "B": "오른쪽"},
+                        },
+                        "translation_scope": ["question", "options"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-blink-val-package",
+                original_hf_dataset="fixture/blink",
+                original_hf_config="Art_Style",
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="blink",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+
+            self.assertFalse((export_dir / "val").exists())
+            metadata_path = export_dir / "validation" / "metadata.jsonl"
+            self.assertTrue(metadata_path.exists())
+            row = json.loads(metadata_path.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(row["split"], "validation")
+            self.assertEqual(row["record_id"], "blink/validation/val-row")
+            validation = validate_self_contained_package(export_dir)
+            self.assertEqual(validation["status"], "passed")
+            datasets = importlib.import_module("datasets")
+            loaded = datasets.load_dataset("imagefolder", data_dir=str(export_dir))
+            self.assertEqual(set(loaded), {"validation"})
+            self.assertEqual(len(loaded["validation"]), 1)
+
     def test_self_contained_visualizer_refreshes_media_on_rerun(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
