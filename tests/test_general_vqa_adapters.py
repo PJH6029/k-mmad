@@ -430,6 +430,18 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
             },
             "translation_scope": ["question", "options"],
         },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "compact-unit-row",
+            "source": {"text_fields": {"question": "What value?", "options": ["1200K", "R$45 Mi", "4800.00PAX"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "값은 무엇인가요?",
+                    "options": ["(A) 1200K", "(B) +806.7k", "(C) R$45 Mi", "(D) 4800.00PAX"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
     ]
     output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 

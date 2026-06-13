@@ -333,6 +333,8 @@ def is_nonlinguistic_text(text: str) -> bool:
         "X",
         "e",
         "E",
+        "k",
+        "K",
         # Common units/symbols that should be preserved.
         "m",
         "cm",
@@ -394,6 +396,8 @@ def is_nonlinguistic_text(text: str) -> bool:
         # Compact financial/table abbreviations.
         "bn",
         "mn",
+        "Mi",
+        "PAX",
         "m",
         "MM",
         "ft",
