@@ -1494,6 +1494,7 @@ def export_self_contained_package(
     missing_media: list[dict[str, Any]] = []
     copied_files = 0
     zip_cache: dict[Path, set[str]] = {}
+    seen_record_ids: dict[str, int] = {}
     for jsonl_file in jsonl_files:
         for row in read_jsonl(jsonl_file):
             normalized = normalized_hf_record(
@@ -1525,6 +1526,21 @@ def export_self_contained_package(
                 normalized["record_id"] = (
                     f"{normalized['benchmark_id']}/{imagefolder_split}/{normalized['source_id']}"
                 )
+            base_record_id = str(normalized["record_id"])
+            duplicate_ordinal = seen_record_ids.get(base_record_id, 0)
+            seen_record_ids[base_record_id] = duplicate_ordinal + 1
+            if duplicate_ordinal:
+                suffix = stable_json_hash(
+                    {
+                        "record_id": base_record_id,
+                        "source_id": normalized.get("source_id"),
+                        "source_record_id": normalized.get("source_record_id"),
+                        "full_translation_index": row.get("full_translation_index"),
+                        "ordinal": duplicate_ordinal,
+                    },
+                    length=8,
+                )
+                normalized["record_id"] = f"{base_record_id}__dup_{duplicate_ordinal}_{suffix}"
             media_package = package_media_for_record(
                 record=normalized,
                 output_dir=output_dir,
@@ -1542,16 +1558,16 @@ def export_self_contained_package(
         raise ValueError("no translated rows found to export")
     if missing_media and not allow_missing_media:
         raise ValueError(f"self-contained package has missing media references: {missing_media[:5]}")
-    seen_record_ids: dict[str, int] = {}
+    exported_record_ids: dict[str, int] = {}
     duplicate_record_ids: list[str] = []
     for idx, record in enumerate(records):
         key = str(record.get("record_id") or "")
         if not key:
             raise ValueError(f"record_id missing before package export at normalized_records[{idx}]")
-        if key in seen_record_ids:
+        if key in exported_record_ids:
             duplicate_record_ids.append(key)
         else:
-            seen_record_ids[key] = idx
+            exported_record_ids[key] = idx
     if duplicate_record_ids:
         raise ValueError(f"duplicate record_id values before package export: {sorted(set(duplicate_record_ids))}")
     split_records = group_by_split(records)

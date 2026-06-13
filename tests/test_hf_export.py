@@ -585,6 +585,72 @@ class HfExportTest(unittest.TestCase):
             self.assertEqual(row["source_record_id"], "blink/val/val-row")
             self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
 
+    def test_self_contained_package_disambiguates_duplicate_record_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            rows = []
+            for idx in range(2):
+                rows.append(
+                    {
+                        "benchmark_id": "mme_realworld",
+                        "split": "test",
+                        "source_id": "perception/ocr_cc/license/h1_0085",
+                        "source": {
+                            "source_record": {"split": "test", "image_path": "images/sample.png", "row_idx": idx},
+                            "image_path": "images/sample.png",
+                            "question": f"Question {idx}?",
+                            "options": ["A", "B"],
+                            "answer": "A",
+                        },
+                        "translated": {
+                            "text_fields": {
+                                "question": f"질문 {idx}?",
+                                "options": ["(A) 에이", "(B) 비"],
+                            }
+                        },
+                        "full_translation_index": idx,
+                        "translation_scope": ["question", "options"],
+                    }
+                )
+            (translations / "translation_smoke.jsonl").write_text(
+                "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-mme-duplicate-test",
+                original_hf_dataset="fixture/mme",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mme_realworld",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+                force_split="test",
+            )
+
+            metadata_rows = [
+                json.loads(line)
+                for line in (export_dir / "test" / "metadata.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            record_ids = [row["record_id"] for row in metadata_rows]
+            self.assertEqual(len(record_ids), len(set(record_ids)))
+            self.assertIn("mme_realworld/test/perception/ocr_cc/license/h1_0085", record_ids)
+            self.assertTrue(any("__dup_1_" in record_id for record_id in record_ids))
+            self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
+
     def test_self_contained_package_deduplicates_reused_media(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
