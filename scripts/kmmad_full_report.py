@@ -86,12 +86,11 @@ def package_stats(package_dir: Path) -> dict[str, Any]:
                 reasons.append("assistant_artifact_text")
             original_options_count = option_count_from_json(row.get("options_original_json"))
             translated_options_count = option_count_from_json(row.get("options_ko_json"))
-            if (
-                original_options_count is not None
-                and translated_options_count is not None
-                and original_options_count != translated_options_count
-            ):
-                reasons.append("options_cardinality_mismatch")
+            if original_options_count is not None:
+                if translated_options_count is None:
+                    reasons.append("options_missing_or_unparseable")
+                elif original_options_count != translated_options_count:
+                    reasons.append("options_cardinality_mismatch")
             if reasons:
                 review_candidates.append(
                     {

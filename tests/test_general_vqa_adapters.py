@@ -628,6 +628,23 @@ def test_option_cardinality_mismatch_is_invalid(tmp_path: Path) -> None:
     assert any("options cardinality mismatch" in error for error in result["errors"])
 
 
+def test_missing_translated_options_are_invalid_when_source_has_options(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "perception/remote_sensing/color/0002",
+        "source": {"text_fields": {"question": "Which color?", "options": ["red", "blue"]}},
+        "translated": {"text_fields": {"question": "어떤 색인가요?"}},
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "failed"
+    assert any("missing translated options" in error for error in result["errors"])
+
+
 def test_mme_ocr_cc_options_allow_source_literals_and_cjk(tmp_path: Path) -> None:
     output = tmp_path / "translation_smoke.jsonl"
     row = {

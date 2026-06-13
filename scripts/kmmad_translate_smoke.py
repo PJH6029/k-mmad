@@ -548,6 +548,9 @@ def validate_option_alignment(row_idx: int, row: dict[str, Any], translated: dic
     translated_options = first_options_value(translated)
     source_count = option_item_count(source_options)
     translated_count = option_item_count(translated_options)
+    if source_count is not None and translated_count is None:
+        errors.append(f"row {row_idx} missing translated options: source has {source_count}")
+        return
     if source_count is not None and translated_count is not None and source_count != translated_count:
         errors.append(
             f"row {row_idx} translated options cardinality mismatch: source has {source_count}, translated has {translated_count}"
