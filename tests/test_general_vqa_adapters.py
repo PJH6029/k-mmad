@@ -313,7 +313,7 @@ class GeneralVqaAdapterTest(unittest.TestCase):
 
         self.assertEqual(result["status"], "failed")
         self.assertTrue(any("text_fields.question" in error for error in result["errors"]))
-        self.assertTrue(any("text_fields.options" in error for error in result["errors"]))
+        self.assertFalse(any("text_fields.options" in error for error in result["errors"]))
 
 
 class OpenAiOauthAliasContractTest(unittest.TestCase):
@@ -328,3 +328,28 @@ class OpenAiOauthAliasContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_numeric_only_options_are_valid_nonlinguistic_translations(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    output.write_text(
+        json.dumps(
+            {
+                "benchmark_id": "blink",
+                "source_id": "counting-row",
+                "source": {"text_fields": {"question": "How many?", "options": ["0", "1"]}},
+                "translated": {
+                    "text_fields": {
+                        "question": "몇 개인가요?",
+                        "options": ["0", "1"],
+                    }
+                },
+                "translation_scope": ["question", "options"],
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    result = validate_output(output)
+    assert result["status"] == "passed"

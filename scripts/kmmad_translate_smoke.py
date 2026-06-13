@@ -36,8 +36,10 @@ CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
 NONLINGUISTIC_FIELD_POLICY = {
-    # MMMU-Pro answer options often contain pure numbers, units, or formulas
+    # Answer options across VQA benchmarks can be pure numbers, units, or formulas
     # whose exact symbols must be preserved instead of forced into Hangul.
+    # This is especially common in BLINK Counting and MMAD imprint/measurement items.
+    "*": {"text_fields.options", "options"},
     "mmmu_pro": {"text_fields.options", "options"},
 }
 BENCHMARK_ARTIFACT_FILES = (
@@ -359,7 +361,7 @@ def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
 
 
 def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: str) -> bool:
-    allowed_fields = NONLINGUISTIC_FIELD_POLICY.get(benchmark_id, set())
+    allowed_fields = NONLINGUISTIC_FIELD_POLICY.get("*", set()) | NONLINGUISTIC_FIELD_POLICY.get(benchmark_id, set())
     return field_path in allowed_fields and is_nonlinguistic_text(text)
 
 
