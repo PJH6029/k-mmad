@@ -34,9 +34,17 @@ from kmmad_benchmarks import load_benchmark_sample, parse_benchmark_ids, registr
 KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
-OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
+OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.):]\s*")
 PAREN_OPTION_LABEL_RE = re.compile(r"^\s*\([A-Z0-9]+\)\s*")
 VISUAL_LABEL_RE = re.compile(r"^(?:box|image|figure|panel|photo|picture)\s+[A-Z0-9]+$", re.IGNORECASE)
+CODE_LITERAL_RE = re.compile(
+    r"^(?:"
+    r"[A-Z][A-Z0-9&/+.$%-]*"
+    r"|[A-Za-z]{1,5}\d+[A-Za-z0-9]*"
+    r"|\d+[A-Za-z]{1,5}[A-Za-z0-9]*"
+    r")$"
+)
+PROPER_NAME_LITERAL_RE = re.compile(r"^[A-Z][A-Za-z0-9&.'-]*(?:\s+[A-Z][A-Za-z0-9&.'/-]*){0,4}$")
 NONLINGUISTIC_FIELD_POLICY = {
     # Answer options across VQA benchmarks can be pure numbers, units, or formulas
     # whose exact symbols must be preserved instead of forced into Hangul.
@@ -62,7 +70,7 @@ def preserve_leading_option_label(source: str, translated: str) -> str:
     if not match:
         return translated
     label = match.group(1)
-    if re.match(rf"^\s*{re.escape(label)}[.)]\s+", translated):
+    if re.match(rf"^\s*{re.escape(label)}[.):]\s*", translated):
         return translated
     prefix = source[match.start() : match.end()].strip()
     return f"{prefix} {translated}"
@@ -297,11 +305,16 @@ def is_nonlinguistic_text(text: str) -> bool:
         return False
     if KOREAN_RE.search(stripped) or CJK_RE.search(stripped):
         return False
+    option_lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+    if len(option_lines) > 1:
+        return all(is_nonlinguistic_text(line) for line in option_lines)
     stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
     stripped = OPTION_LABEL_RE.sub("", stripped).strip()
     if stripped.upper() in {"NA", "N/A"}:
         return True
     if VISUAL_LABEL_RE.fullmatch(stripped):
+        return True
+    if CODE_LITERAL_RE.fullmatch(stripped) or PROPER_NAME_LITERAL_RE.fullmatch(stripped):
         return True
     if stripped.upper() in {
         # Currency codes and compact table literals are answer values, not
@@ -333,6 +346,7 @@ def is_nonlinguistic_text(text: str) -> bool:
         "X",
         "e",
         "E",
+        *(chr(code) for code in range(ord("a"), ord("z") + 1)),
         "k",
         "K",
         # Common units/symbols that should be preserved.
@@ -393,7 +407,23 @@ def is_nonlinguistic_text(text: str) -> bool:
         "Oct",
         "Nov",
         "Dec",
+        "jan",
+        "feb",
+        "mar",
+        "apr",
+        "may",
+        "jun",
+        "jul",
+        "aug",
+        "sep",
+        "sept",
+        "oct",
+        "nov",
+        "dec",
         # Compact financial/table abbreviations.
+        "FY",
+        "YTD",
+        "TTM",
         "bn",
         "mn",
         "Mi",

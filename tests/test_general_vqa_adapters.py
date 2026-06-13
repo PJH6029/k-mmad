@@ -442,6 +442,42 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
             },
             "translation_scope": ["question", "options"],
         },
+        {
+            "benchmark_id": "mmad",
+            "source_id": "connector-code-row",
+            "source": {"question": "What connector?", "options": "A: USB\nB: RJ11\nC: HDMI\nD: RJ45"},
+            "translated": {
+                "text_fields": {
+                    "question": "커넥터는 무엇인가요?",
+                    "options": "A: USB\nB: RJ11\nC: HDMI\nD: RJ45",
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "proper-name-row",
+            "source": {"text_fields": {"question": "Which client?", "options": ["Prophet LLC", "Orange Inc", "Paseo"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "어느 클라이언트인가요?",
+                    "options": ["(A) Prophet LLC", "(B) Orange Inc", "(C) Paseo", "(D) PvL1", "(E) a1"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "fiscal-period-row",
+            "source": {"text_fields": {"question": "Which year?", "options": ["FY 2032", "YTD 31-03-2018"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "어느 연도인가요?",
+                    "options": ["(A) FY 2032", "(B) YTD 31-03-2018", "(C) TTM 31-mar-19"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
     ]
     output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
