@@ -38,6 +38,8 @@ class FullReportTest(unittest.TestCase):
             "question_ko": "행정 보조원 선발 시험은 언제 열리나요?",
             "file_name": "images/mme_realworld/sample.png",
             "media_files": ["test/images/mme_realworld/sample.png"],
+            "options_original_json": json.dumps(["(A) 1", "(B) 2"], ensure_ascii=False),
+            "options_ko_json": json.dumps(["(A) 1", "(B) 2"], ensure_ascii=False),
         }
 
     def test_package_stats_does_not_flag_assistant_job_title(self) -> None:
@@ -53,6 +55,15 @@ class FullReportTest(unittest.TestCase):
 
         self.assertEqual(stats["review_candidate_count"], 1)
         self.assertEqual(stats["review_candidates_sample"][0]["reasons"], ["assistant_artifact_text"])
+
+    def test_package_stats_flags_option_cardinality_mismatch(self) -> None:
+        row = self.base_row()
+        row["options_ko_json"] = json.dumps(["(A) 1"], ensure_ascii=False)
+
+        stats = package_stats(self.make_package(row))
+
+        self.assertEqual(stats["review_candidate_count"], 1)
+        self.assertEqual(stats["review_candidates_sample"][0]["reasons"], ["options_cardinality_mismatch"])
 
 
 if __name__ == "__main__":

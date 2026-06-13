@@ -29,6 +29,19 @@ def count_jsonl(path: Path) -> int:
         return sum(1 for line in fh if line.strip())
 
 
+def option_count_from_json(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError:
+            return None
+    if isinstance(value, (list, tuple, dict)):
+        return len(value)
+    return None
+
+
 def translation_stats(translation_dir: Path) -> dict[str, Any]:
     summary = load_json(translation_dir / "translation_smoke_summary.json")
     validation = load_json(translation_dir / "translation_validation.json")
@@ -71,6 +84,14 @@ def package_stats(package_dir: Path) -> dict[str, Any]:
                 reasons.append("media_file_path_missing")
             if any(ASSISTANT_ARTIFACT_RE.search(text) for text in flatten_text(row)):
                 reasons.append("assistant_artifact_text")
+            original_options_count = option_count_from_json(row.get("options_original_json"))
+            translated_options_count = option_count_from_json(row.get("options_ko_json"))
+            if (
+                original_options_count is not None
+                and translated_options_count is not None
+                and original_options_count != translated_options_count
+            ):
+                reasons.append("options_cardinality_mismatch")
             if reasons:
                 review_candidates.append(
                     {

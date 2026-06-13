@@ -397,7 +397,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "date-row",
-            "source": {"text_fields": {"question": "What date?", "options": ["30-Apr-22"]}},
+            "source": {"text_fields": {"question": "What date?", "options": ["30-Apr-22", "30-Jun-22"]}},
             "translated": {
                 "text_fields": {
                     "question": "날짜는 무엇인가요?",
@@ -409,7 +409,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "currency-row",
-            "source": {"text_fields": {"question": "What currency?", "options": ["RMB", "USD"]}},
+            "source": {"text_fields": {"question": "What currency?", "options": ["RMB", "USD", "EURO"]}},
             "translated": {
                 "text_fields": {
                     "question": "통화는 무엇인가요?",
@@ -421,7 +421,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "range-row",
-            "source": {"text_fields": {"question": "What range?", "options": ["40.00 to 60.00"]}},
+            "source": {"text_fields": {"question": "What range?", "options": ["40.00 to 60.00", "$7.5 bn to $10.0 bn"]}},
             "translated": {
                 "text_fields": {
                     "question": "범위는 무엇인가요?",
@@ -433,7 +433,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "compact-unit-row",
-            "source": {"text_fields": {"question": "What value?", "options": ["1200K", "R$45 Mi", "4800.00PAX"]}},
+            "source": {"text_fields": {"question": "What value?", "options": ["1200K", "+806.7k", "R$45 Mi", "4800.00PAX", "20..%"]}},
             "translated": {
                 "text_fields": {
                     "question": "값은 무엇인가요?",
@@ -469,7 +469,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "proper-name-row",
-            "source": {"text_fields": {"question": "Which client?", "options": ["Prophet LLC", "Orange Inc", "Paseo"]}},
+            "source": {"text_fields": {"question": "Which client?", "options": ["Prophet LLC", "Orange Inc", "Paseo", "PvL1", "a1"]}},
             "translated": {
                 "text_fields": {
                     "question": "어느 클라이언트인가요?",
@@ -481,7 +481,7 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         {
             "benchmark_id": "mme_realworld",
             "source_id": "fiscal-period-row",
-            "source": {"text_fields": {"question": "Which year?", "options": ["FY 2032", "YTD 31-03-2018"]}},
+            "source": {"text_fields": {"question": "Which year?", "options": ["FY 2032", "YTD 31-03-2018", "TTM 31-mar-19"]}},
             "translated": {
                 "text_fields": {
                     "question": "어느 연도인가요?",
@@ -492,8 +492,8 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
         },
         {
             "benchmark_id": "mme_realworld",
-            "source_id": "table-client-row",
-            "source": {"text_fields": {"question": "Which client?", "options": ["xyz", "lmn", "byz co."]}},
+            "source_id": "reasoning/diagram_and_table/table/0398",
+            "source": {"text_fields": {"question": "Which client?", "options": ["xyz", "lmn", "dd", "byz co."]}},
             "translated": {
                 "text_fields": {
                     "question": "어느 고객인가요?",
@@ -566,6 +566,66 @@ def test_table_chart_literal_policy_still_rejects_plain_english_options(tmp_path
 
     assert result["status"] == "failed"
     assert any("text_fields.options" in error for error in result["errors"])
+
+
+def test_short_color_words_are_not_treated_as_source_literals(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "perception/remote_sensing/color/0001",
+        "source": {"text_fields": {"question": "Which color?", "options": ["red", "blue"]}},
+        "translated": {
+            "text_fields": {
+                "question": "어떤 색인가요?",
+                "options": ["(A) red", "(B) blue"],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "failed"
+    assert any("text_fields.options" in error for error in result["errors"])
+
+
+def test_option_cardinality_mismatch_is_invalid(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "perception/ocr_cc/book_map_poster/0463",
+        "source": {
+            "text_fields": {
+                "question": "What is the last line?",
+                "options": [
+                    "(A) IKKE TIL BORN UNDER",
+                    "(B) 3 AR PGA SMADELE",
+                    "(C) MINOS MENORES DE 36",
+                    "(D) NO RECOMENDABLE PARA",
+                    "(E) The image does not feature the content.",
+                ],
+            }
+        },
+        "translated": {
+            "text_fields": {
+                "question": "마지막 줄은 무엇인가요?",
+                "options": [
+                    "(A) 3세 미만 어린이에게 적합하지 않음",
+                    "(B) 3세 이하",
+                    "(C) 36세 미만",
+                    "(D) 권장하지 않음",
+                ],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "failed"
+    assert any("options cardinality mismatch" in error for error in result["errors"])
 
 
 def test_mme_ocr_cc_options_allow_source_literals_and_cjk(tmp_path: Path) -> None:

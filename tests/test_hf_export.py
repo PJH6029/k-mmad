@@ -814,6 +814,32 @@ class HfExportTest(unittest.TestCase):
             for row in viewer_data["records"]:
                 self.assertEqual(self.fetch_from_static_dir(visualizer_dir, row["media"][0]), 200)
 
+    def test_unified_visualizer_refuses_unsafe_output_dirs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_dir = root / "package"
+            (package_dir / "test").mkdir(parents=True)
+            (package_dir / "hf_package_manifest.json").write_text(
+                json.dumps({"splits": {"test": {"num_rows": 0}}}),
+                encoding="utf-8",
+            )
+            non_empty = root / "viewer"
+            non_empty.mkdir()
+            (non_empty / "keep.txt").write_text("keep", encoding="utf-8")
+
+            with self.assertRaises(FileExistsError):
+                write_unified_visualizer(package_dirs=[package_dir], output_dir=non_empty)
+            self.assertTrue((non_empty / "keep.txt").exists())
+
+            summary = write_unified_visualizer(package_dirs=[package_dir], output_dir=non_empty, overwrite=True)
+            self.assertEqual(summary["status"], "failed")
+            self.assertFalse((non_empty / "keep.txt").exists())
+
+            for bad_output in (package_dir, package_dir / "viewer", root):
+                with self.subTest(bad_output=bad_output):
+                    with self.assertRaises(ValueError):
+                        write_unified_visualizer(package_dirs=[package_dir], output_dir=bad_output, overwrite=True)
+
     def test_self_contained_imagefolder_package_canonicalizes_val_split(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

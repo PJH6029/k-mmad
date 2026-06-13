@@ -46,8 +46,27 @@ CODE_LITERAL_RE = re.compile(
 )
 PROPER_NAME_LITERAL_RE = re.compile(r"^[A-Z][A-Za-z0-9&.'-]*(?:\s+[A-Z][A-Za-z0-9&.'/-]*){0,4}$")
 LOWER_SHORT_LITERAL_RE = re.compile(r"^[a-z]{1,4}\.?(?:\s+[a-z]{1,4}\.?){0,2}$")
-LOWER_SHORT_LITERAL_STOPWORDS = {"no", "yes", "money", "day", "year"}
+LOWER_SHORT_LITERAL_STOPWORDS = {
+    "black",
+    "blue",
+    "brown",
+    "day",
+    "gray",
+    "green",
+    "grey",
+    "money",
+    "no",
+    "orange",
+    "pink",
+    "purple",
+    "red",
+    "white",
+    "yellow",
+    "year",
+    "yes",
+}
 OCR_LITERAL_SOURCE_MARKERS = ("/ocr_cc/", "ocr_cc/")
+DIAGRAM_TABLE_SOURCE_MARKERS = ("/diagram_and_table/", "diagram_and_table/")
 NONLINGUISTIC_FIELD_POLICY = {
     # Answer options across VQA benchmarks can be pure numbers, units, or formulas
     # whose exact symbols must be preserved instead of forced into Hangul.
@@ -325,10 +344,6 @@ def is_nonlinguistic_text(text: str) -> bool:
         return True
     if CODE_LITERAL_RE.fullmatch(stripped) or PROPER_NAME_LITERAL_RE.fullmatch(stripped):
         return True
-    if LOWER_SHORT_LITERAL_RE.fullmatch(stripped):
-        lower_tokens = [token.strip(".") for token in stripped.lower().split()]
-        if not any(token in LOWER_SHORT_LITERAL_STOPWORDS for token in lower_tokens):
-            return True
     if stripped.upper() in {
         # Currency codes and compact table literals are answer values, not
         # English prose. Preserving them avoids corrupting visible table/chart
@@ -459,6 +474,25 @@ def is_nonlinguistic_text(text: str) -> bool:
     return all(token in allowed_tokens or token.isupper() for token in tokens)
 
 
+def is_lower_short_literal_text(text: str) -> bool:
+    stripped = text.strip()
+    if not stripped or KOREAN_RE.search(stripped) or CJK_RE.search(stripped):
+        return False
+    option_lines = [line.strip() for line in stripped.splitlines() if line.strip()]
+    if len(option_lines) > 1:
+        return all(is_lower_short_literal_text(line) or is_nonlinguistic_text(line) for line in option_lines)
+    paren_stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
+    if paren_stripped != stripped:
+        stripped = paren_stripped
+    else:
+        stripped = OPTION_LABEL_RE.sub("", stripped).strip()
+    stripped = stripped.strip("\"'“”‘’").strip()
+    if not LOWER_SHORT_LITERAL_RE.fullmatch(stripped):
+        return False
+    lower_tokens = [token.strip(".") for token in stripped.lower().split()]
+    return bool(lower_tokens) and not any(token in LOWER_SHORT_LITERAL_STOPWORDS for token in lower_tokens)
+
+
 def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
     if value is None:
         return []
@@ -479,12 +513,56 @@ def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
     return [(field_path, str(value))]
 
 
+def option_item_count(value: Any) -> int | None:
+    if value in (None, ""):
+        return None
+    if isinstance(value, (list, tuple, dict)):
+        return len(value)
+    if isinstance(value, str):
+        lines = [line for line in value.splitlines() if line.strip()]
+        if len(lines) > 1 and all(PAREN_OPTION_LABEL_RE.match(line) or OPTION_LABEL_RE.match(line) for line in lines):
+            return len(lines)
+    return None
+
+
+def first_options_value(mapping: dict[str, Any]) -> Any:
+    text_fields = mapping.get("text_fields")
+    if isinstance(text_fields, dict):
+        key, value = get_first(text_fields, OPTION_KEYS)
+        if key:
+            return value
+    source_record = mapping.get("source_record")
+    if isinstance(source_record, dict):
+        key, value = get_first(source_record, OPTION_KEYS)
+        if key:
+            return value
+    key, value = get_first(mapping, OPTION_KEYS)
+    return value if key else None
+
+
+def validate_option_alignment(row_idx: int, row: dict[str, Any], translated: dict[str, Any], errors: list[str]) -> None:
+    source = row.get("source")
+    if not isinstance(source, dict):
+        return
+    source_options = first_options_value(source)
+    translated_options = first_options_value(translated)
+    source_count = option_item_count(source_options)
+    translated_count = option_item_count(translated_options)
+    if source_count is not None and translated_count is not None and source_count != translated_count:
+        errors.append(
+            f"row {row_idx} translated options cardinality mismatch: source has {source_count}, translated has {translated_count}"
+        )
+
+
 def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: str, *, source_id: str = "") -> bool:
     allowed_fields = NONLINGUISTIC_FIELD_POLICY.get("*", set()) | NONLINGUISTIC_FIELD_POLICY.get(benchmark_id, set())
     if field_path not in allowed_fields:
         return False
     if benchmark_id == "mme_realworld" and any(marker in source_id for marker in OCR_LITERAL_SOURCE_MARKERS):
         return True
+    if benchmark_id == "mme_realworld" and any(marker in source_id for marker in DIAGRAM_TABLE_SOURCE_MARKERS):
+        if is_lower_short_literal_text(text):
+            return True
     return is_nonlinguistic_text(text)
 
 
@@ -574,6 +652,7 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
                 errors.append(f"row {idx} has no configured text fields to translate")
         benchmark_id = str(row.get("benchmark_id") or "")
         source_id = str(row.get("source_id") or "")
+        validate_option_alignment(idx, row, translated, errors)
         for key, value in translated.items():
             validate_translated_value(idx, str(key), value, errors, benchmark_id=benchmark_id, source_id=source_id)
         if "source" not in row:

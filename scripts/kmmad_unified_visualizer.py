@@ -37,11 +37,33 @@ def safe_link_name(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in value).strip("._-") or "media"
 
 
-def reset_dir(path: Path) -> None:
+def has_dir_entries(path: Path) -> bool:
+    return path.exists() and path.is_dir() and any(path.iterdir())
+
+
+def assert_output_dir_safe(*, output_dir: Path, package_dirs: list[Path], overwrite: bool) -> None:
+    output_resolved = output_dir.resolve()
+    for package_dir in package_dirs:
+        package_resolved = package_dir.resolve()
+        if output_resolved == package_resolved:
+            raise ValueError(f"visualizer output_dir must not equal package_dir: {output_dir}")
+        if _is_relative_to(output_resolved, package_resolved):
+            raise ValueError(f"visualizer output_dir must not be inside package_dir: {output_dir}")
+        if _is_relative_to(package_resolved, output_resolved):
+            raise ValueError(f"visualizer output_dir must not contain package_dir: {output_dir}")
+    if has_dir_entries(output_dir) and not overwrite:
+        raise FileExistsError(f"refusing to overwrite non-empty visualizer output dir without --overwrite: {output_dir}")
+
+
+def reset_dir(path: Path, *, overwrite: bool) -> None:
     if path.exists():
         if path.is_symlink() or path.is_file():
+            if not overwrite:
+                raise FileExistsError(f"refusing to overwrite existing visualizer output path without --overwrite: {path}")
             path.unlink()
         else:
+            if not overwrite and has_dir_entries(path):
+                raise FileExistsError(f"refusing to overwrite non-empty visualizer output dir without --overwrite: {path}")
             shutil.rmtree(path)
     path.mkdir(parents=True, exist_ok=True)
 
@@ -107,8 +129,9 @@ def row_to_viewer_record(*, row: dict[str, Any], package_dir: Path, visualizer_d
     }
 
 
-def write_unified_visualizer(*, package_dirs: list[Path], output_dir: Path) -> dict[str, Any]:
-    reset_dir(output_dir)
+def write_unified_visualizer(*, package_dirs: list[Path], output_dir: Path, overwrite: bool = False) -> dict[str, Any]:
+    assert_output_dir_safe(output_dir=output_dir, package_dirs=package_dirs, overwrite=overwrite)
+    reset_dir(output_dir, overwrite=overwrite)
     records: list[dict[str, Any]] = []
     by_benchmark: dict[str, int] = {}
     media_refs = 0
@@ -174,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--package-dir", type=Path, action="append", default=[])
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--validate-only", type=Path)
+    parser.add_argument("--overwrite", action="store_true", help="Allow replacing an existing non-empty visualizer output directory")
     args = parser.parse_args(argv)
     if args.validate_only:
         result = validate_visualizer(args.validate_only)
@@ -181,7 +205,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["status"] == "passed" else 1
     if not args.package_dir or args.output_dir is None:
         parser.error("--package-dir and --output-dir are required unless --validate-only is used")
-    summary = write_unified_visualizer(package_dirs=args.package_dir, output_dir=args.output_dir)
+    summary = write_unified_visualizer(package_dirs=args.package_dir, output_dir=args.output_dir, overwrite=args.overwrite)
     validation = validate_visualizer(args.output_dir)
     write_json(args.output_dir / "unified_visualizer_validation.json", validation)
     print(json.dumps({"summary": summary, "validation": validation}, ensure_ascii=False, indent=2))
