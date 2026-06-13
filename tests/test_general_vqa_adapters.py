@@ -490,6 +490,42 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
             },
             "translation_scope": ["question", "options"],
         },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "company-code-row",
+            "source": {"text_fields": {"question": "Which client?", "options": ["ABC Co. 1", "XYZ Co. 2"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "어느 고객인가요?",
+                    "options": ["(A) ABC Co. 1", "(B) XYZ Co. 2"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mmad",
+            "source_id": "quoted-label-row",
+            "source": {"question": "What text?", "options": 'A: "Soup Daren Signature"\nB: "Soup Darren"'},
+            "translated": {
+                "text_fields": {
+                    "question": "어떤 글자인가요?",
+                    "options": 'A: "Soup Daren Signature"\nB: "Soup Darren"',
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "blank-placeholder-row",
+            "source": {"text_fields": {"question": "Yes/no?", "options": ["Yes", "No", "", ""]}},
+            "translated": {
+                "text_fields": {
+                    "question": "예/아니오 질문인가요?",
+                    "options": ["(A) 예", "(B) 아니요", "(C) ", "(D) "],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
     ]
     output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
@@ -530,6 +566,27 @@ def test_mme_ocr_cc_options_allow_source_literals_and_cjk(tmp_path: Path) -> Non
             "text_fields": {
                 "question": "어떤 글자인가요?",
                 "options": ["(A) 京北", "(B) PEKING 北京", "(C) dean&david"],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "passed"
+
+
+def test_mme_ocr_cc_question_allows_quoted_source_cjk_literal(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "perception/ocr_cc/text_recog/0006",
+        "source": {"text_fields": {"question": 'What is below "四川"?', "options": ["BURGER FABRIEK"]}},
+        "translated": {
+            "text_fields": {
+                "question": '“四川”이라고 불리는 표시판 아래의 글자는 무엇인가요?',
+                "options": ["(A) BURGER FABRIEK"],
             }
         },
         "translation_scope": ["question", "options"],

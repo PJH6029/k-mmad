@@ -313,6 +313,9 @@ def is_nonlinguistic_text(text: str) -> bool:
         return all(is_nonlinguistic_text(line) for line in option_lines)
     stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
     stripped = OPTION_LABEL_RE.sub("", stripped).strip()
+    stripped = stripped.strip("\"'“”‘’").strip()
+    if not stripped:
+        return True
     if stripped.upper() in {"NA", "N/A"}:
         return True
     if VISUAL_LABEL_RE.fullmatch(stripped):
@@ -394,6 +397,9 @@ def is_nonlinguistic_text(text: str) -> bool:
         "KRW",
         "CNY",
         "JPY",
+        "Co",
+        "Inc",
+        "LLC",
         # Date/range/time literals commonly appear in chart/table answer
         # choices. They are usually copied from the image and should remain
         # machine-comparable.
@@ -445,7 +451,7 @@ def is_nonlinguistic_text(text: str) -> bool:
         "sqft",
         "Sqft",
     }
-    return all(token in allowed_tokens for token in tokens)
+    return all(token in allowed_tokens or token.isupper() for token in tokens)
 
 
 def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
@@ -477,6 +483,10 @@ def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: s
     return is_nonlinguistic_text(text)
 
 
+def allows_cjk_source_literal(benchmark_id: str, source_id: str) -> bool:
+    return benchmark_id == "mme_realworld" and any(marker in source_id for marker in OCR_LITERAL_SOURCE_MARKERS)
+
+
 def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str], *, benchmark_id: str = "", source_id: str = "") -> None:
     items = translated_text_items(value, key)
     if not items:
@@ -486,7 +496,7 @@ def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[s
         nonlinguistic_allowed = allows_nonlinguistic_translation(benchmark_id, field_path, text, source_id=source_id)
         if not KOREAN_RE.search(text) and not nonlinguistic_allowed:
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} has no Korean text")
-        if CJK_RE.search(text) and not nonlinguistic_allowed:
+        if CJK_RE.search(text) and not (nonlinguistic_allowed or allows_cjk_source_literal(benchmark_id, source_id)):
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains CJK/Hanja characters")
         if ASSISTANT_ARTIFACT_RE.search(text):
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains assistant artifact text")
