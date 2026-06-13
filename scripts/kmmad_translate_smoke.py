@@ -35,6 +35,8 @@ KOREAN_RE = re.compile(r"[가-힣]")
 CJK_RE = re.compile(r"[\u4e00-\u9fff]")
 ASSISTANT_ARTIFACT_RE = re.compile(r"\bassistant\b", re.IGNORECASE)
 OPTION_LABEL_RE = re.compile(r"^\s*([A-Z]|[0-9]+)[.)]\s+")
+PAREN_OPTION_LABEL_RE = re.compile(r"^\s*\([A-Z0-9]+\)\s*")
+VISUAL_LABEL_RE = re.compile(r"^(?:box|image|figure|panel|photo|picture)\s+[A-Z0-9]+$", re.IGNORECASE)
 NONLINGUISTIC_FIELD_POLICY = {
     # Answer options across VQA benchmarks can be pure numbers, units, or formulas
     # whose exact symbols must be preserved instead of forced into Hangul.
@@ -295,6 +297,12 @@ def is_nonlinguistic_text(text: str) -> bool:
         return False
     if KOREAN_RE.search(stripped) or CJK_RE.search(stripped):
         return False
+    stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
+    stripped = OPTION_LABEL_RE.sub("", stripped).strip()
+    if stripped.upper() in {"NA", "N/A"}:
+        return True
+    if VISUAL_LABEL_RE.fullmatch(stripped):
+        return True
     if not any(char.isdigit() for char in stripped):
         return False
     tokens = re.findall(r"[A-Za-z]+", stripped)
@@ -336,6 +344,10 @@ def is_nonlinguistic_text(text: str) -> bool:
         "L",
         "mL",
         "USD",
+        "ft",
+        "sq",
+        "sqft",
+        "Sqft",
     }
     return all(token in allowed_tokens for token in tokens)
 

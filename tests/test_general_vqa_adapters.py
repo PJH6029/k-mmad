@@ -353,3 +353,39 @@ def test_numeric_only_options_are_valid_nonlinguistic_translations(tmp_path: Pat
     )
     result = validate_output(output)
     assert result["status"] == "passed"
+
+
+def test_visual_labels_and_unit_options_are_valid_nonlinguistic_translations(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    rows = [
+        {
+            "benchmark_id": "blink",
+            "source_id": "box-row",
+            "source": {"text_fields": {"question": "Which box?", "options": ["Box A", "Box B"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "어느 상자인가요?",
+                    "options": ["Box A", "Box B"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "unit-row",
+            "source": {"text_fields": {"question": "What size?", "options": ["(A) NA", "(B) 20.00 sq ft"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "크기가 얼마인가요?",
+                    "options": ["(A) NA", "(B) 20.00 sq ft"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+    ]
+    output.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    result = validate_output(output)
+    assert result["status"] == "passed"
