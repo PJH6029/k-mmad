@@ -15,6 +15,7 @@ import ast
 import hashlib
 import importlib
 import json
+import os
 import re
 import shutil
 import zipfile
@@ -807,6 +808,22 @@ def resolve_media_source(
     return None
 
 
+def materialize_package_file(source_path: Path, target_path: Path) -> None:
+    """Materialize a package file, preferring hardlinks on the same filesystem.
+
+    A hardlink is still a real directory entry inside the self-contained package:
+    deleting the original source path does not remove the package file, and Hub
+    upload/read paths see regular file content.  When hardlinking is not
+    possible (different filesystem, permissions, zip extraction, etc.), fall
+    back to a metadata-preserving copy.
+    """
+
+    try:
+        os.link(source_path, target_path)
+    except OSError:
+        shutil.copy2(source_path, target_path)
+
+
 def package_media_for_record(
     *,
     record: dict[str, Any],
@@ -842,7 +859,7 @@ def package_media_for_record(
         target_path.parent.mkdir(parents=True, exist_ok=True)
         if not target_path.exists():
             if zip_member is None:
-                shutil.copy2(source_path, target_path)
+                materialize_package_file(source_path, target_path)
             else:
                 with zipfile.ZipFile(source_path) as zf, zf.open(zip_member) as src, target_path.open("wb") as dst:
                     shutil.copyfileobj(src, dst)
@@ -1542,7 +1559,7 @@ def export_self_contained_package(
         write_jsonl(output_dir / split / "metadata.jsonl", rows)
     split_counts = {split: len(rows) for split, rows in split_records.items()}
     media_packaging = {
-        "mode": "self_contained_copy",
+        "mode": "self_contained_link_or_copy",
         "copied_files": copied_files,
         "missing_media_refs": sum(len(item["missing"]) for item in missing_media),
         "allow_missing_media": allow_missing_media,
