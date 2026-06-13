@@ -13,6 +13,9 @@ from kmmad_common import flatten_text, utc_now, write_json
 from kmmad_hf_export import read_jsonl
 
 KOREAN_RE = re.compile(r"[가-힣]")
+ASSISTANT_ARTIFACT_RE = re.compile(
+    r"(?i)(?:^|\n)\s*assistant\s*:|as an ai (?:language )?model|i(?:'m| am) (?:an )?ai"
+)
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -66,7 +69,7 @@ def package_stats(package_dir: Path) -> dict[str, Any]:
                 reasons.append("media_files_empty")
             elif any(not (package_dir / str(media_file)).exists() for media_file in media_files):
                 reasons.append("media_file_path_missing")
-            if any("assistant" in text.lower() for text in flatten_text(row)):
+            if any(ASSISTANT_ARTIFACT_RE.search(text) for text in flatten_text(row)):
                 reasons.append("assistant_artifact_text")
             if reasons:
                 review_candidates.append(
