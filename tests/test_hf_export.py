@@ -33,6 +33,7 @@ PNG_1X1 = base64.b64decode(
 PNG_1X1_RED = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"
 )
+GIF_1X1 = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==")
 
 
 class HfExportTest(unittest.TestCase):
@@ -649,6 +650,55 @@ class HfExportTest(unittest.TestCase):
             self.assertEqual(len(record_ids), len(set(record_ids)))
             self.assertIn("mme_realworld/test/perception/ocr_cc/license/h1_0085", record_ids)
             self.assertTrue(any("__dup_1_" in record_id for record_id in record_ids))
+            self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
+
+    def test_self_contained_package_treats_gif_as_primary_image(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.gif").write_bytes(GIF_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            translations.joinpath("translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "benchmark_id": "mme_realworld",
+                        "source_id": "gif-row",
+                        "source": {
+                            "source_record": {"image_path": "images/sample.gif"},
+                            "image_path": "images/sample.gif",
+                            "question": "Question?",
+                            "answer": "A",
+                        },
+                        "translated": {"question": "질문?"},
+                        "translation_scope": ["question"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-gif-package",
+                original_hf_dataset="fixture/gif",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mme_realworld",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+            row = json.loads((export_dir / "test" / "metadata.jsonl").read_text(encoding="utf-8").splitlines()[0])
+            self.assertTrue(row["file_name"].endswith(".gif"))
             self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
 
     def test_self_contained_package_deduplicates_reused_media(self) -> None:

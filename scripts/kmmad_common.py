@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 TEXT_EXTENSIONS = {".json", ".jsonl", ".csv"}
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".gif", ".webp", ".tif", ".tiff"}
 
 # Conservative redaction helpers for command/log/run-record boundaries.
 # Keep env var names visible, but never persist bearer values, OpenAI-style keys,
