@@ -389,3 +389,72 @@ def test_visual_labels_and_unit_options_are_valid_nonlinguistic_translations(tmp
     )
     result = validate_output(output)
     assert result["status"] == "passed"
+
+
+def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    rows = [
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "date-row",
+            "source": {"text_fields": {"question": "What date?", "options": ["30-Apr-22"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "날짜는 무엇인가요?",
+                    "options": ["(A) 30-Apr-22", "(B) 30-Jun-22"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "currency-row",
+            "source": {"text_fields": {"question": "What currency?", "options": ["RMB", "USD"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "통화는 무엇인가요?",
+                    "options": ["(A) RMB", "(B) USD", "(C) EURO"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "range-row",
+            "source": {"text_fields": {"question": "What range?", "options": ["40.00 to 60.00"]}},
+            "translated": {
+                "text_fields": {
+                    "question": "범위는 무엇인가요?",
+                    "options": ["(A) 40.00 to 60.00", "(B) $7.5 bn to $10.0 bn"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+    ]
+    output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "passed"
+
+
+def test_table_chart_literal_policy_still_rejects_plain_english_options(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "plain-english-option",
+        "source": {"text_fields": {"question": "What currency?", "options": ["money"]}},
+        "translated": {
+            "text_fields": {
+                "question": "통화는 무엇인가요?",
+                "options": ["(A) money"],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "failed"
+    assert any("text_fields.options" in error for error in result["errors"])

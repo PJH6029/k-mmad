@@ -303,6 +303,24 @@ def is_nonlinguistic_text(text: str) -> bool:
         return True
     if VISUAL_LABEL_RE.fullmatch(stripped):
         return True
+    if stripped.upper() in {
+        # Currency codes and compact table literals are answer values, not
+        # English prose. Preserving them avoids corrupting visible table/chart
+        # labels while still rejecting ordinary English option text below.
+        "AUD",
+        "CAD",
+        "CHF",
+        "CNY",
+        "EUR",
+        "EURO",
+        "GBP",
+        "HKD",
+        "JPY",
+        "KRW",
+        "RMB",
+        "USD",
+    }:
+        return True
     if not any(char.isdigit() for char in stripped):
         return False
     tokens = re.findall(r"[A-Za-z]+", stripped)
@@ -344,6 +362,40 @@ def is_nonlinguistic_text(text: str) -> bool:
         "L",
         "mL",
         "USD",
+        "EUR",
+        "EURO",
+        "RMB",
+        "KRW",
+        "CNY",
+        "JPY",
+        # Date/range/time literals commonly appear in chart/table answer
+        # choices. They are usually copied from the image and should remain
+        # machine-comparable.
+        "to",
+        "day",
+        "days",
+        "yr",
+        "yrs",
+        "year",
+        "years",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Sept",
+        "Oct",
+        "Nov",
+        "Dec",
+        # Compact financial/table abbreviations.
+        "bn",
+        "mn",
+        "m",
+        "MM",
         "ft",
         "sq",
         "sqft",

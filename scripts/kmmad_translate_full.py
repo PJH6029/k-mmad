@@ -125,8 +125,10 @@ def call_batch(
                     "object while preserving the original JSON shape, option labels, numbers, units, "
                     "line breaks, and answer-choice letters. Do not answer the questions, do not infer "
                     "from images, do not add explanations, and do not use Chinese/Hanja characters. "
-                    "Use Hangul Korean for linguistic content. Preserve non-linguistic IDs or pure "
-                    "symbols if there is nothing to translate."
+                    "Use Hangul Korean for linguistic content, including ordinary English words in "
+                    "answer options such as money, day, year, and range connectors when a natural "
+                    "Korean equivalent is appropriate. Preserve non-linguistic IDs, currency codes, "
+                    "proper nouns, formulas, or pure symbols if there is nothing to translate."
                 ),
             },
             {
