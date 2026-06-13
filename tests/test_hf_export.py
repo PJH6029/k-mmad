@@ -24,6 +24,7 @@ from kmmad_hf_export import (  # noqa: E402
     validate_self_contained_package,
 )
 from kmmad_translate_smoke import main as translate_main  # noqa: E402
+from kmmad_unified_visualizer import validate_visualizer, write_unified_visualizer  # noqa: E402
 
 
 PNG_1X1 = base64.b64decode(
@@ -522,6 +523,180 @@ class HfExportTest(unittest.TestCase):
             self.assertTrue((visualizer_dir / media_url).exists())
             self.assertEqual(self.fetch_from_static_dir(visualizer_dir, media_url), 200)
             self.assertIn("side-by-side", (visualizer_dir / "index.html").read_text(encoding="utf-8"))
+
+
+    def test_self_contained_package_force_split_preserves_source_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            (translations / "translation_smoke.jsonl").write_text(
+                json.dumps(
+                    {
+                        "benchmark_id": "blink",
+                        "split": "val",
+                        "source_id": "val-row",
+                        "source": {
+                            "source_record": {"split": "val", "image_path": "images/sample.png"},
+                            "image_path": "images/sample.png",
+                            "question": "Which artwork is closer?",
+                            "options": {"A": "left", "B": "right"},
+                            "answer": "A",
+                        },
+                        "translated": {
+                            "question": "어느 작품이 더 가까운가요?",
+                            "options": {"A": "왼쪽", "B": "오른쪽"},
+                        },
+                        "translation_scope": ["question", "options"],
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-blink-force-test-package",
+                original_hf_dataset="fixture/blink",
+                original_hf_config="Art_Style",
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="blink",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+                force_split="test",
+            )
+            self.assertFalse((export_dir / "validation").exists())
+            metadata_path = export_dir / "test" / "metadata.jsonl"
+            row = json.loads(metadata_path.read_text(encoding="utf-8").splitlines()[0])
+            self.assertEqual(row["split"], "test")
+            self.assertEqual(row["record_id"], "blink/test/val-row")
+            self.assertEqual(row["source_split"], "val")
+            self.assertEqual(row["source_record_id"], "blink/val/val-row")
+            self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
+
+    def test_self_contained_package_deduplicates_reused_media(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            media_root = root / "source-media"
+            (media_root / "images").mkdir(parents=True)
+            (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+            translations = root / "translations"
+            translations.mkdir()
+            rows = []
+            for idx in range(2):
+                rows.append(
+                    {
+                        "source": {
+                            "id": f"row-{idx}",
+                            "image_path": "images/sample.png",
+                            "question": f"Question {idx}?",
+                            "answer": "A",
+                        },
+                        "translated": {"question": f"질문 {idx}?"},
+                        "translation_scope": ["question"],
+                    }
+                )
+            translations.joinpath("translation_smoke.jsonl").write_text(
+                "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows),
+                encoding="utf-8",
+            )
+            export_dir = root / "clean-package"
+            manifest = export_translations(
+                translation_outputs=[translations],
+                output_dir=export_dir,
+                dataset_name="k-dedupe-package",
+                original_hf_dataset="fixture/dedupe",
+                original_hf_config=None,
+                original_hf_revision=None,
+                default_split="test",
+                fallback_benchmark_id="mmad",
+                translation_run_id=None,
+                translation_qc_status="passed",
+                translation_qc_report=None,
+                hub_repo_id=None,
+                skip_translation_validation=True,
+                self_contained_package=True,
+                media_roots=[media_root],
+            )
+            metadata_rows = [
+                json.loads(line)
+                for line in (export_dir / "test" / "metadata.jsonl").read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(len(metadata_rows), 2)
+            self.assertEqual(metadata_rows[0]["media_files"], metadata_rows[1]["media_files"])
+            self.assertEqual(manifest["media_packaging"]["copied_files"], 2)
+            self.assertEqual(len(list((export_dir / "test" / "images" / "mmad").iterdir())), 1)
+            self.assertEqual(validate_self_contained_package(export_dir)["status"], "passed")
+
+    def test_unified_visualizer_combines_package_records_with_symlinked_media(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_dirs = []
+            for benchmark_id in ("mmad", "blink"):
+                media_root = root / f"media-{benchmark_id}"
+                (media_root / "images").mkdir(parents=True)
+                (media_root / "images" / "sample.png").write_bytes(PNG_1X1)
+                translations = root / f"translations-{benchmark_id}"
+                translations.mkdir()
+                translations.joinpath("translation_smoke.jsonl").write_text(
+                    json.dumps(
+                        {
+                            "benchmark_id": benchmark_id,
+                            "source_id": f"{benchmark_id}-row",
+                            "source": {
+                                "source_record": {"image_path": "images/sample.png"},
+                                "image_path": "images/sample.png",
+                                "question": "Question?",
+                                "answer": "A",
+                            },
+                            "translated": {"question": "질문?"},
+                            "translation_scope": ["question"],
+                        },
+                        ensure_ascii=False,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+                export_dir = root / f"package-{benchmark_id}"
+                export_translations(
+                    translation_outputs=[translations],
+                    output_dir=export_dir,
+                    dataset_name=f"k-{benchmark_id}",
+                    original_hf_dataset=f"fixture/{benchmark_id}",
+                    original_hf_config=None,
+                    original_hf_revision=None,
+                    default_split="test",
+                    fallback_benchmark_id=benchmark_id,
+                    translation_run_id=None,
+                    translation_qc_status="passed",
+                    translation_qc_report=None,
+                    hub_repo_id=None,
+                    skip_translation_validation=True,
+                    self_contained_package=True,
+                    media_roots=[media_root],
+                    force_split="test",
+                )
+                package_dirs.append(export_dir)
+            visualizer_dir = root / "unified-viewer"
+            summary = write_unified_visualizer(package_dirs=package_dirs, output_dir=visualizer_dir)
+            self.assertEqual(summary["records"], 2)
+            validation = validate_visualizer(visualizer_dir)
+            self.assertEqual(validation["status"], "passed")
+            viewer_data = json.loads((visualizer_dir / "viewer_data.json").read_text(encoding="utf-8"))
+            self.assertEqual({row["benchmark_id"] for row in viewer_data["records"]}, {"mmad", "blink"})
+            for row in viewer_data["records"]:
+                self.assertEqual(self.fetch_from_static_dir(visualizer_dir, row["media"][0]), 200)
 
     def test_self_contained_imagefolder_package_canonicalizes_val_split(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

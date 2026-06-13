@@ -716,8 +716,15 @@ def clean_media_ref(value: str) -> str:
     return value.replace("\\", "/")
 
 
-def safe_media_filename(*, record_id: str, index: int, source_path: Path) -> str:
-    digest = hashlib.sha256(f"{record_id}\n{index}\n{source_path}".encode("utf-8")).hexdigest()[:12]
+def safe_media_filename(*, source_path: Path, source_identity: str | None = None) -> str:
+    """Return a stable package filename for one source media object.
+
+    The filename is intentionally source-based, not row-based, so full benchmark
+    packages deduplicate repeated media references across many questions.
+    """
+
+    identity = source_identity or str(source_path)
+    digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16]
     stem = safe_label_part(source_path.stem)[:48] or "media"
     suffix = source_path.suffix.lower() or ".bin"
     return f"{digest}-{stem}{suffix}"
@@ -822,10 +829,14 @@ def package_media_for_record(
             continue
         source_path, zip_member = source
         target_source_name = Path(zip_member) if zip_member is not None else source_path
+        source_identity = (
+            f"{source_path.resolve()}::{zip_member}"
+            if zip_member is not None
+            else str(source_path.resolve())
+        )
         target_rel = Path(split) / "images" / benchmark_id / safe_media_filename(
-            record_id=str(record["record_id"]),
-            index=idx,
             source_path=target_source_name,
+            source_identity=source_identity,
         )
         target_path = output_dir / target_rel
         target_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1448,6 +1459,7 @@ def export_self_contained_package(
     media_roots: list[Path],
     visualizer_dir: Path | None,
     allow_missing_media: bool,
+    force_split: str | None = None,
 ) -> dict[str, Any]:
     del translation_run_id, translation_qc_report, hub_repo_id
     assert_visualizer_dir_disjoint(output_dir, visualizer_dir)
@@ -1484,6 +1496,12 @@ def export_self_contained_package(
             )
             normalized["source_record_id"] = normalized["record_id"]
             normalized["source_split"] = normalized["split"]
+            if force_split:
+                forced_split = normalize_split(force_split, "test")
+                normalized["split"] = forced_split
+                normalized["record_id"] = (
+                    f"{normalized['benchmark_id']}/{forced_split}/{normalized['source_id']}"
+                )
             imagefolder_split = normalize_imagefolder_split(normalized["split"])
             if imagefolder_split != normalized["split"]:
                 normalized["split"] = imagefolder_split
@@ -1595,6 +1613,7 @@ def export_translations(
     media_roots: list[Path] | None = None,
     visualizer_dir: Path | None = None,
     allow_missing_media: bool = False,
+    force_split: str | None = None,
 ) -> dict[str, Any]:
     if self_contained_package:
         return export_self_contained_package(
@@ -1614,6 +1633,7 @@ def export_translations(
             media_roots=media_roots or [],
             visualizer_dir=visualizer_dir,
             allow_missing_media=allow_missing_media,
+            force_split=force_split,
         )
     assert_output_dir_safe(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -1762,6 +1782,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Allow clean package export even when some media references cannot be copied.",
     )
+    parser.add_argument(
+        "--force-split",
+        default=None,
+        help=(
+            "Force all exported rows into this split while preserving "
+            "source_split/source_record_id in clean package metadata"
+        ),
+    )
     parser.add_argument("--validate-only", type=Path, help="Validate an existing HF export directory")
     args = parser.parse_args(argv)
 
@@ -1798,6 +1826,7 @@ def main(argv: list[str] | None = None) -> int:
         media_roots=args.media_root,
         visualizer_dir=args.visualizer_dir,
         allow_missing_media=args.allow_missing_media,
+        force_split=args.force_split,
     )
     print(json.dumps({"status": "passed", "manifest": manifest}, ensure_ascii=False, indent=2))
     return 0
