@@ -65,14 +65,16 @@ class FullReportTest(unittest.TestCase):
         self.assertEqual(stats["review_candidate_count"], 1)
         self.assertEqual(stats["review_candidates_sample"][0]["reasons"], ["options_cardinality_mismatch"])
 
-    def test_package_stats_flags_missing_translated_options(self) -> None:
-        row = self.base_row()
-        row["options_ko_json"] = ""
+    def test_package_stats_flags_missing_or_unparseable_translated_options(self) -> None:
+        for translated_options in ("", "{not json"):
+            with self.subTest(translated_options=translated_options):
+                row = self.base_row()
+                row["options_ko_json"] = translated_options
 
-        stats = package_stats(self.make_package(row))
+                stats = package_stats(self.make_package(row))
 
-        self.assertEqual(stats["review_candidate_count"], 1)
-        self.assertEqual(stats["review_candidates_sample"][0]["reasons"], ["options_missing_or_unparseable"])
+                self.assertEqual(stats["review_candidate_count"], 1)
+                self.assertEqual(stats["review_candidates_sample"][0]["reasons"], ["options_missing_or_unparseable"])
 
 
 if __name__ == "__main__":
