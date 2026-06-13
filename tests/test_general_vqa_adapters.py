@@ -478,6 +478,18 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
             },
             "translation_scope": ["question", "options"],
         },
+        {
+            "benchmark_id": "mme_realworld",
+            "source_id": "table-client-row",
+            "source": {"text_fields": {"question": "Which client?", "options": ["xyz", "lmn", "byz co."]}},
+            "translated": {
+                "text_fields": {
+                    "question": "어느 고객인가요?",
+                    "options": ["(A) xyz", "(B) lmn", "(C) dd", "(D) byz co."],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
     ]
     output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
@@ -506,3 +518,46 @@ def test_table_chart_literal_policy_still_rejects_plain_english_options(tmp_path
 
     assert result["status"] == "failed"
     assert any("text_fields.options" in error for error in result["errors"])
+
+
+def test_mme_ocr_cc_options_allow_source_literals_and_cjk(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "perception/ocr_cc/adver_and_product/0069",
+        "source": {"text_fields": {"question": "What text?", "options": ["京北", "PEKING 北京", "dean&david"]}},
+        "translated": {
+            "text_fields": {
+                "question": "어떤 글자인가요?",
+                "options": ["(A) 京北", "(B) PEKING 北京", "(C) dean&david"],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "passed"
+
+
+def test_cjk_options_outside_mme_ocr_cc_still_fail(tmp_path: Path) -> None:
+    output = tmp_path / "translation_smoke.jsonl"
+    row = {
+        "benchmark_id": "mme_realworld",
+        "source_id": "reasoning/diagram_and_table/table/0001",
+        "source": {"text_fields": {"question": "What text?", "options": ["北京"]}},
+        "translated": {
+            "text_fields": {
+                "question": "어떤 글자인가요?",
+                "options": ["(A) 北京"],
+            }
+        },
+        "translation_scope": ["question", "options"],
+    }
+    output.write_text(json.dumps(row, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    result = validate_output(output)
+
+    assert result["status"] == "failed"
+    assert any("CJK/Hanja" in error for error in result["errors"])

@@ -164,10 +164,10 @@ def has_forbidden_translation_artifact(value: Any) -> bool:
     return any(ASSISTANT_ARTIFACT_RE.search(text) for text in flatten_text(value))
 
 
-def translation_errors(index: int, benchmark_id: str, translated: dict[str, Any]) -> list[str]:
+def translation_errors(index: int, benchmark_id: str, translated: dict[str, Any], *, source_id: str = "") -> list[str]:
     errors: list[str] = []
     for key, value in translated.items():
-        validate_translated_value(index, str(key), value, errors, benchmark_id=benchmark_id)
+        validate_translated_value(index, str(key), value, errors, benchmark_id=benchmark_id, source_id=source_id)
     if has_forbidden_translation_artifact(translated):
         errors.append(f"row {index} contains assistant artifact text")
     return errors
@@ -205,7 +205,7 @@ def finish_item(item: WorkItem, translations: dict[str, Any]) -> tuple[dict[str,
         row["translated"] = cleaned
         validation_payload = cleaned
     row["full_translation_index"] = item.index
-    errors = translation_errors(item.index, benchmark_id, validation_payload)
+    errors = translation_errors(item.index, benchmark_id, validation_payload, source_id=str(row.get("source_id") or ""))
     return row, errors
 
 

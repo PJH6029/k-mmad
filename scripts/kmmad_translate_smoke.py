@@ -45,6 +45,9 @@ CODE_LITERAL_RE = re.compile(
     r")$"
 )
 PROPER_NAME_LITERAL_RE = re.compile(r"^[A-Z][A-Za-z0-9&.'-]*(?:\s+[A-Z][A-Za-z0-9&.'/-]*){0,4}$")
+LOWER_SHORT_LITERAL_RE = re.compile(r"^[a-z]{1,4}\.?(?:\s+[a-z]{1,4}\.?){0,2}$")
+LOWER_SHORT_LITERAL_STOPWORDS = {"no", "yes", "money", "day", "year"}
+OCR_LITERAL_SOURCE_MARKERS = ("/ocr_cc/", "ocr_cc/")
 NONLINGUISTIC_FIELD_POLICY = {
     # Answer options across VQA benchmarks can be pure numbers, units, or formulas
     # whose exact symbols must be preserved instead of forced into Hangul.
@@ -316,6 +319,10 @@ def is_nonlinguistic_text(text: str) -> bool:
         return True
     if CODE_LITERAL_RE.fullmatch(stripped) or PROPER_NAME_LITERAL_RE.fullmatch(stripped):
         return True
+    if LOWER_SHORT_LITERAL_RE.fullmatch(stripped):
+        lower_tokens = [token.strip(".") for token in stripped.lower().split()]
+        if not any(token in LOWER_SHORT_LITERAL_STOPWORDS for token in lower_tokens):
+            return True
     if stripped.upper() in {
         # Currency codes and compact table literals are answer values, not
         # English prose. Preserving them avoids corrupting visible table/chart
@@ -332,6 +339,9 @@ def is_nonlinguistic_text(text: str) -> bool:
         "KRW",
         "RMB",
         "USD",
+        "Co",
+        "Inc",
+        "LLC",
     }:
         return True
     if not any(char.isdigit() for char in stripped):
@@ -458,20 +468,25 @@ def translated_text_items(value: Any, field_path: str) -> list[tuple[str, str]]:
     return [(field_path, str(value))]
 
 
-def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: str) -> bool:
+def allows_nonlinguistic_translation(benchmark_id: str, field_path: str, text: str, *, source_id: str = "") -> bool:
     allowed_fields = NONLINGUISTIC_FIELD_POLICY.get("*", set()) | NONLINGUISTIC_FIELD_POLICY.get(benchmark_id, set())
-    return field_path in allowed_fields and is_nonlinguistic_text(text)
+    if field_path not in allowed_fields:
+        return False
+    if benchmark_id == "mme_realworld" and any(marker in source_id for marker in OCR_LITERAL_SOURCE_MARKERS):
+        return True
+    return is_nonlinguistic_text(text)
 
 
-def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str], *, benchmark_id: str = "") -> None:
+def validate_translated_value(row_idx: int, key: str, value: Any, errors: list[str], *, benchmark_id: str = "", source_id: str = "") -> None:
     items = translated_text_items(value, key)
     if not items:
         errors.append(f"row {row_idx} translated field {key!r} is empty")
         return
     for text_idx, (field_path, text) in enumerate(items):
-        if not KOREAN_RE.search(text) and not allows_nonlinguistic_translation(benchmark_id, field_path, text):
+        nonlinguistic_allowed = allows_nonlinguistic_translation(benchmark_id, field_path, text, source_id=source_id)
+        if not KOREAN_RE.search(text) and not nonlinguistic_allowed:
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} has no Korean text")
-        if CJK_RE.search(text):
+        if CJK_RE.search(text) and not nonlinguistic_allowed:
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains CJK/Hanja characters")
         if ASSISTANT_ARTIFACT_RE.search(text):
             errors.append(f"row {row_idx} translated field {field_path!r} item {text_idx} contains assistant artifact text")
@@ -543,8 +558,9 @@ def validate_output(output: Path, report: Path | None = None) -> dict[str, Any]:
             if "text_fields" in missing_scope:
                 errors.append(f"row {idx} has no configured text fields to translate")
         benchmark_id = str(row.get("benchmark_id") or "")
+        source_id = str(row.get("source_id") or "")
         for key, value in translated.items():
-            validate_translated_value(idx, str(key), value, errors, benchmark_id=benchmark_id)
+            validate_translated_value(idx, str(key), value, errors, benchmark_id=benchmark_id, source_id=source_id)
         if "source" not in row:
             errors.append(f"row {idx} missing source field")
         if "benchmark_id" in row and not row.get("source_id"):
