@@ -311,8 +311,11 @@ def is_nonlinguistic_text(text: str) -> bool:
     option_lines = [line.strip() for line in stripped.splitlines() if line.strip()]
     if len(option_lines) > 1:
         return all(is_nonlinguistic_text(line) for line in option_lines)
-    stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
-    stripped = OPTION_LABEL_RE.sub("", stripped).strip()
+    paren_stripped = PAREN_OPTION_LABEL_RE.sub("", stripped).strip()
+    if paren_stripped != stripped:
+        stripped = paren_stripped
+    else:
+        stripped = OPTION_LABEL_RE.sub("", stripped).strip()
     stripped = stripped.strip("\"'“”‘’").strip()
     if not stripped:
         return True
@@ -390,6 +393,8 @@ def is_nonlinguistic_text(text: str) -> bool:
         "mol",
         "L",
         "mL",
+        "ml",
+        "vol",
         "USD",
         "EUR",
         "EURO",

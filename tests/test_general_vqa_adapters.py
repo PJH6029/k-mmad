@@ -437,7 +437,19 @@ def test_table_chart_literal_options_allow_dates_currency_and_ranges(tmp_path: P
             "translated": {
                 "text_fields": {
                     "question": "값은 무엇인가요?",
-                    "options": ["(A) 1200K", "(B) +806.7k", "(C) R$45 Mi", "(D) 4800.00PAX"],
+                    "options": ["(A) 1200K", "(B) +806.7k", "(C) R$45 Mi", "(D) 4800.00PAX", "(E) 20..%"],
+                }
+            },
+            "translation_scope": ["question", "options"],
+        },
+        {
+            "benchmark_id": "mmad",
+            "source_id": "volume-unit-row",
+            "source": {"question": "What volume?", "options": "A: 350 ml\nB: 6.5% vol"},
+            "translated": {
+                "text_fields": {
+                    "question": "부피는 얼마인가요?",
+                    "options": "A: 350 ml\nB: 6.5% vol",
                 }
             },
             "translation_scope": ["question", "options"],
