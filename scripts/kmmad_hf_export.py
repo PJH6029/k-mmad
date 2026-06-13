@@ -85,9 +85,11 @@ EXTRA_MEDIA_KEYS = (
 )
 SELF_CONTAINED_REQUIRED_COLUMNS = {
     "record_id",
+    "source_record_id",
     "benchmark_id",
     "source_id",
     "split",
+    "source_split",
     "file_name",
     "media_files",
     "question_original",
@@ -96,11 +98,13 @@ SELF_CONTAINED_REQUIRED_COLUMNS = {
 }
 CLEAN_PACKAGE_COLUMNS = {
     "record_id",
+    "source_record_id",
     "dataset_name",
     "benchmark_id",
     "benchmark_name",
     "source_id",
     "split",
+    "source_split",
     "task",
     "file_name",
     "media_files",
@@ -853,11 +857,13 @@ def clean_self_contained_record(record: dict[str, Any], media_package: dict[str,
     root_relative_files = [str(item) for item in media_package["root_relative_files"]]
     clean = {
         "record_id": record["record_id"],
+        "source_record_id": record.get("source_record_id") or record["record_id"],
         "dataset_name": record["dataset_name"],
         "benchmark_id": record["benchmark_id"],
         "benchmark_name": record["benchmark_name"],
         "source_id": record["source_id"],
         "split": record["split"],
+        "source_split": record.get("source_split") or record["split"],
         "task": record["task"],
         "file_name": image_split_relative_files[0] if image_split_relative_files else "",
         "media_files": root_relative_files,
@@ -916,6 +922,8 @@ This is a self-contained Korean VQA translation package in Hugging Face ImageFol
 - Image files are stored under `<split>/images/...`.
 - The `file_name` column points to the primary image for Hub/Dataset Viewer compatibility.
 - The `media_files` column contains all packaged media paths relative to the package root.
+- The `record_id` column is package-local and follows ImageFolder split names; `source_record_id`
+  and `source_split` preserve source-stable identity before ImageFolder split canonicalization.
 
 ## Splits
 
@@ -967,9 +975,11 @@ def write_visualizer(visualizer_dir: Path, *, package_dir: Path, records: list[d
             media_paths.append(target_rel.as_posix())
         viewer_records.append({
             "record_id": record["record_id"],
+            "source_record_id": record.get("source_record_id") or record["record_id"],
             "benchmark_id": record["benchmark_id"],
             "benchmark_name": record["benchmark_name"],
             "split": record["split"],
+            "source_split": record.get("source_split") or record["split"],
             "source_id": record["source_id"],
             "task": record["task"],
             "media": media_paths,
@@ -1472,6 +1482,8 @@ def export_self_contained_package(
                 translation_qc_report=None,
                 exported_at=exported_at,
             )
+            normalized["source_record_id"] = normalized["record_id"]
+            normalized["source_split"] = normalized["split"]
             imagefolder_split = normalize_imagefolder_split(normalized["split"])
             if imagefolder_split != normalized["split"]:
                 normalized["split"] = imagefolder_split

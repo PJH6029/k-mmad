@@ -581,6 +581,8 @@ class HfExportTest(unittest.TestCase):
             row = json.loads(metadata_path.read_text(encoding="utf-8").splitlines()[0])
             self.assertEqual(row["split"], "validation")
             self.assertEqual(row["record_id"], "blink/validation/val-row")
+            self.assertEqual(row["source_split"], "val")
+            self.assertEqual(row["source_record_id"], "blink/val/val-row")
             validation = validate_self_contained_package(export_dir)
             self.assertEqual(validation["status"], "passed")
             datasets = importlib.import_module("datasets")
